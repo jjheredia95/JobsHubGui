@@ -47,10 +47,10 @@
     <div id="mainNavbar" ref="menuRef" class="collapse navbar-collapse">
       <ul class="navbar-nav ms-4 gap-1">
         <li class="nav-item">
-          <RouterLink class="jh-nav-link" to="/vacancies/list" @click="closeNavbar">Jobs</RouterLink>
+          <RouterLink class="jh-nav-link" to="/vacancies" @click="closeNavbar">Jobs</RouterLink>
         </li>
         <li class="nav-item">
-          <RouterLink class="jh-nav-link" to="/categories/list" @click="closeNavbar">Categories</RouterLink>
+          <RouterLink class="jh-nav-link" to="/categories" @click="closeNavbar">Categories</RouterLink>
         </li>
         <li class="nav-item">
           <RouterLink class="jh-nav-link" to="/companies" @click="closeNavbar">Companies</RouterLink>

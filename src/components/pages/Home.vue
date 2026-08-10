@@ -1,8 +1,11 @@
 <script setup>
 import "../../assets/css/Home.css"
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import Pagination from '../common/Pagination.vue'
+
+// ── Config ─────────────────────────────────────────────
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 // ── State ──────────────────────────────────────────────
 const vacancies      = ref([])
@@ -11,153 +14,122 @@ const totalElements  = ref(0)
 const currentPage    = ref(0)
 const loading        = ref(false)
 const error          = ref(false)
+const errorMessage   = ref('')
 const pageSize       = 4
 const locOpen        = ref(false)
 const filtersOpen    = ref(false)
-const suggestions    = ref([])
+const locQuery       = ref('')          // texto visible en el input
 const locInput       = ref(null)
-let debounceTimer    = null
 
+// Catálogos que vienen del backend (con sus IDs reales)
+const categories = ref([])              // [{ id, name }]
+const locations  = ref([])              // [{ id, city, state }]
+
+// Los filtros ahora guardan IDs, no texto libre
 const filters = reactive({
-  keyword:    '',
-  location:   '',
-  category:   '',
-  workMode:   '',
-  employment: '',
+  search:         '',
+  locationId:     null,
+  categoryId:     null,
+  workMode:       '',
+  employmentType: '',
 })
 
 const stats = reactive({
   totalJobs:       0,
-  totalCompanies:  340,
+  totalCompanies:  0,
   totalCategories: 0,
 })
 
-// ── Location data ──────────────────────────────────────
-const DEFAULT_LOCS = [
-  'New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX',
-  'Phoenix, AZ', 'San Francisco, CA', 'Seattle, WA', 'Austin, TX',
-  'Miami, FL', 'Remote',
+// ── Opciones de enum — deben coincidir EXACTO con el backend ──
+// WorkMode: REMOTE, ONSITE, HYBRID
+const workModeOptions = [
+  { value: '',       label: 'All' },
+  { value: 'REMOTE', label: '🏠 Remote' },
+  { value: 'ONSITE', label: '🏢 On-site' },
+  { value: 'HYBRID', label: '🔀 Hybrid' },
 ]
 
-const US_CITIES = [
-  'Akron, OH','Albuquerque, NM','Alexandria, VA','Anaheim, CA','Anchorage, AK',
-  'Arlington, TX','Arlington, VA','Atlanta, GA','Aurora, CO','Aurora, IL',
-  'Austin, TX','Bakersfield, CA','Baltimore, MD','Baton Rouge, LA','Birmingham, AL',
-  'Bloomfield, CT','Bloomington, MN','Boston, MA','Bridgeport, CT','Buffalo, NY',
-  'Chandler, AZ','Charlotte, NC','Chesapeake, VA','Chicago, IL','Chula Vista, CA',
-  'Cincinnati, OH','Cleveland, OH','Colorado Springs, CO','Columbus, OH','Corpus Christi, TX',
-  'Dallas, TX','Danbury, CT','Denver, CO','Detroit, MI','Durham, NC',
-  'El Paso, TX','Fairfield, CT','Fort Collins, CO','Fort Wayne, IN','Fort Worth, TX',
-  'Fremont, CA','Fresno, CA','Garland, TX','Gilbert, AZ','Glendale, AZ',
-  'Glendale, CA','Grand Rapids, MI','Greensboro, NC','Greenwich, CT','Hartford, CT',
-  'Henderson, NV','Hialeah, FL','Honolulu, HI','Houston, TX','Huntington Beach, CA',
-  'Huntsville, AL','Indianapolis, IN','Irvine, CA','Irving, TX','Jacksonville, FL',
-  'Jersey City, NJ','Kansas City, KS','Kansas City, MO','Laredo, TX','Las Vegas, NV',
-  'Lexington, KY','Lincoln, NE','Long Beach, CA','Los Angeles, CA','Louisville, KY',
-  'Lubbock, TX','Madison, WI','Memphis, TN','Mesa, AZ','Miami, FL',
-  'Milwaukee, WI','Minneapolis, MN','Modesto, CA','Montgomery, AL','Nashville, TN',
-  'New Haven, CT','New Orleans, LA','New York, NY','Newark, NJ','Norfolk, VA',
-  'North Las Vegas, NV','Oakland, CA','Oklahoma City, OK','Omaha, NE','Orlando, FL',
-  'Philadelphia, PA','Phoenix, AZ','Pittsburgh, PA','Plano, TX','Portland, OR',
-  'Raleigh, NC','Reno, NV','Richmond, VA','Riverside, CA','Rochester, NY',
-  'Sacramento, CA','San Antonio, TX','San Diego, CA','San Francisco, CA','San Jose, CA',
-  'Santa Ana, CA','Scottsdale, AZ','Seattle, WA','Spokane, WA','St. Louis, MO',
-  'St. Paul, MN','Stamford, CT','Stockton, CA','Tampa, FL','Toledo, OH',
-  'Tucson, AZ','Tulsa, OK','Virginia Beach, VA','Washington, DC','Waterbury, CT',
-  'Wichita, KS','Winston-Salem, NC','Remote',
+// EmploymentType: FULL_TIME, PART_TIME, CONTRACT, INTERNSHIP, TEMPORARY
+const employmentOptions = [
+  { value: '',           label: 'All' },
+  { value: 'FULL_TIME',  label: '⏱ Full-time' },
+  { value: 'PART_TIME',  label: '🕐 Part-time' },
+  { value: 'CONTRACT',   label: '📋 Contract' },
+  { value: 'INTERNSHIP', label: '🎓 Internship' },
+  { value: 'TEMPORARY',  label: '📆 Temporary' },
 ]
 
-const STATE_ABBR = {
-  'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
-  'Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA',
-  'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA',
-  'Kansas':'KS','Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD',
-  'Massachusetts':'MA','Michigan':'MI','Minnesota':'MN','Mississippi':'MS',
-  'Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV','New Hampshire':'NH',
-  'New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC',
-  'North Dakota':'ND','Ohio':'OH','Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA',
-  'Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD','Tennessee':'TN',
-  'Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA','Washington':'WA',
-  'West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY','District of Columbia':'DC',
+// Categorías: se arman desde la API para tener los IDs reales
+const categoryOptions = computed(() => [
+  { value: null, label: 'All' },
+  ...categories.value.map(c => ({ value: c.id, label: c.name })),
+])
+
+// ── Autocompletado de ubicación (sobre datos propios) ──
+const DEFAULT_LOC_COUNT = 8
+
+function locLabel(loc) {
+  return loc.state ? `${loc.city}, ${loc.state}` : loc.city
 }
 
-// ── Location helpers ───────────────────────────────────
-function onLocFocus() {
-  const q = filters.location.trim().toLowerCase()
-  suggestions.value = q.length >= 2
-      ? US_CITIES.filter(c => c.toLowerCase().includes(q)).slice(0, 8)
-      : DEFAULT_LOCS
-  locOpen.value = true
-}
+const suggestions = computed(() => {
+  const q = locQuery.value.trim().toLowerCase()
+  if (!q) return locations.value.slice(0, DEFAULT_LOC_COUNT)
+  return locations.value
+      .filter(l => locLabel(l).toLowerCase().includes(q))
+      .slice(0, DEFAULT_LOC_COUNT)
+})
+
+function onLocFocus() { locOpen.value = true }
 
 function onLocInput(e) {
-  filters.location = e.target.value
-  clearTimeout(debounceTimer)
-  const val = filters.location.trim()
-  if (!val) { suggestions.value = DEFAULT_LOCS; locOpen.value = true; return }
-  if (val.length < 2) return
-  const q = val.toLowerCase()
-  suggestions.value = US_CITIES.filter(c => c.toLowerCase().includes(q)).slice(0, 8)
+  locQuery.value = e.target.value
+  // Si el usuario edita el texto, el ID anterior deja de ser válido
+  filters.locationId = null
   locOpen.value = true
-  debounceTimer = setTimeout(() => fetchCitiesFromApi(val), 350)
 }
 
 function onLocBlur() {
   setTimeout(() => { locOpen.value = false }, 160)
 }
 
-function selectCity(city) {
-  filters.location = city
-  locOpen.value    = false
+function selectLocation(loc) {
+  filters.locationId = loc.id
+  locQuery.value     = locLabel(loc)
+  locOpen.value      = false
+  loadData(0)
 }
 
-async function fetchCitiesFromApi(q) {
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&countrycodes=us&featuretype=city&format=json&limit=8&addressdetails=1`
-    const res  = await fetch(url, { headers: { 'Accept-Language': 'en-US,en' } })
-    const data = await res.json()
-    const seen = new Set(); const cities = []
-    for (const item of data) {
-      const addr  = item.address || {}
-      const city  = addr.city || addr.town || addr.village || addr.hamlet || ''
-      const abbr  = STATE_ABBR[addr.state || ''] || ''
-      if (!city || !abbr) continue
-      const label = `${city}, ${abbr}`
-      if (!seen.has(label)) { seen.add(label); cities.push(label) }
-    }
-    if ('remote'.startsWith(q.toLowerCase())) cities.unshift('Remote')
-    if (cities.length > 0) suggestions.value = cities
-  } catch { /* local results already showing */ }
+function clearLocation() {
+  filters.locationId = null
+  locQuery.value     = ''
+  loadData(0)
 }
 
-// ── Filters ────────────────────────────────────────────
+// ── Filtros ────────────────────────────────────────────
 function toggleFilters() { filtersOpen.value = !filtersOpen.value }
 
-function setFilter(key, value) { filters[key] = value }
+function setFilter(key, value) {
+  filters[key] = value
+  loadData(0)              // aplicar de inmediato y volver a página 1
+}
 
-const categoryOptions = [
-  { value: '',           label: 'All' },
-  { value: 'technology', label: '💻 Technology' },
-  { value: 'healthcare', label: '🏥 Healthcare' },
-  { value: 'finance',    label: '💰 Finance' },
-  { value: 'marketing',  label: '📣 Marketing' },
-  { value: 'education',  label: '🎓 Education' },
-]
-const workModeOptions = [
-  { value: '',       label: 'All' },
-  { value: 'remote', label: '🏠 Remote' },
-  { value: 'onsite', label: '🏢 On-site' },
-  { value: 'hybrid', label: '🔀 Hybrid' },
-]
-const employmentOptions = [
-  { value: '',           label: 'All' },
-  { value: 'fulltime',   label: '⏱ Full-time' },
-  { value: 'parttime',   label: '🕐 Part-time' },
-  { value: 'contract',   label: '📋 Contract' },
-  { value: 'internship', label: '🎓 Internship' },
-]
+const hasActiveFilters = computed(() =>
+    !!filters.search || filters.categoryId !== null || filters.locationId !== null
+    || !!filters.workMode || !!filters.employmentType
+)
 
-// ── Job card helpers ───────────────────────────────────
+function clearAllFilters() {
+  filters.search         = ''
+  filters.categoryId     = null
+  filters.locationId     = null
+  filters.workMode       = ''
+  filters.employmentType = ''
+  locQuery.value         = ''
+  loadData(0)
+}
+
+// ── Helpers de la tarjeta ──────────────────────────────
 const GRADIENTS = [
   'linear-gradient(135deg,#6366F1,#8B5CF6)',
   'linear-gradient(135deg,#0EA5E9,#0284C7)',
@@ -175,32 +147,65 @@ function vacancyInitial(vacancy) {
   return (vacancy.name || '?')[0].toUpperCase()
 }
 
+// El DTO manda category como String plano
 function vacancyCategory(vacancy) {
-  const c = vacancy.category
-  if (!c) return 'General'
-  return typeof c === 'string' ? c : c.name || 'General'
+  return vacancy.category || 'General'
 }
 
-function vacancyWorkMode(vacancy) {
-  return vacancy.workMode || vacancy.work_mode || 'On-site'
+// Etiquetas legibles para los enums del backend
+const WORK_MODE_LABELS = {
+  REMOTE: 'Remote',
+  ONSITE: 'On-site',
+  HYBRID: 'Hybrid',
+}
+
+const EMPLOYMENT_LABELS = {
+  FULL_TIME:  'Full-time',
+  PART_TIME:  'Part-time',
+  CONTRACT:   'Contract',
+  INTERNSHIP: 'Internship',
+  TEMPORARY:  'Temporary',
+}
+
+function workModeLabel(vacancy) {
+  return WORK_MODE_LABELS[vacancy.workMode] || null
+}
+
+function employmentLabel(vacancy) {
+  return EMPLOYMENT_LABELS[vacancy.employmentType] || null
 }
 
 function workModeBadgeClass(vacancy) {
-  const wm = vacancyWorkMode(vacancy).toLowerCase()
-  if (wm.includes('remote')) return 'badge-wm-remote'
-  if (wm.includes('hybrid')) return 'badge-wm-hybrid'
-  return 'badge-wm-onsite'
+  switch (vacancy.workMode) {
+    case 'REMOTE': return 'badge-wm-remote'
+    case 'HYBRID': return 'badge-wm-hybrid'
+    default:       return 'badge-wm-onsite'
+  }
 }
 
+// locations llega como List<LocationDto> => [{ id, city, state }]
 function vacancyLocations(vacancy) {
-  const loc = vacancy.locations || vacancy.location
-  if (!loc) return []
-  if (Array.isArray(loc)) return loc.map(l => typeof l === 'string' ? l : l.name || l.city || '')
-  return [loc]
+  if (!Array.isArray(vacancy.locations)) return []
+  return vacancy.locations.map(locLabel)
+}
+
+// VacancyStatus: PUBLISHED, OPEN, CLOSED
+const STATUS_LABELS = {
+  PUBLISHED: 'Published',
+  OPEN:      'Open',
+  CLOSED:    'Closed',
+}
+
+function statusLabel(vacancy) {
+  return STATUS_LABELS[vacancy.status] || vacancy.status || ''
+}
+
+function statusClass(vacancy) {
+  return vacancy.status === 'CLOSED' ? 'status-closed' : 'status-open'
 }
 
 function vacancyDaysAgo(vacancy) {
-  const d = vacancy.publishedDate || vacancy.date || vacancy.createdAt
+  const d = vacancy.publishedDate
   if (!d) return ''
   const diff = Math.floor((Date.now() - new Date(d)) / 86400000)
   if (diff === 0) return 'Today'
@@ -210,27 +215,43 @@ function vacancyDaysAgo(vacancy) {
 
 // ── API ────────────────────────────────────────────────
 async function loadData(page = 0) {
-  loading.value = true
-  error.value   = false
+  loading.value      = true
+  error.value        = false
+  errorMessage.value = ''
   try {
     const params = new URLSearchParams({ page, size: pageSize })
-    if (filters.keyword)    params.append('description', filters.keyword)
-    if (filters.category)   params.append('category',    filters.category)
-    if (filters.location)   params.append('location',    filters.location)
-    if (filters.workMode)   params.append('workMode',    filters.workMode)
-    if (filters.employment) params.append('employment',  filters.employment)
 
-    const res = await fetch(`http://localhost:8080/api/home?${params}`)
-    if (!res.ok) throw new Error()
+    // Nombres EXACTOS del HomeController
+    if (filters.search)             params.append('search',         filters.search)
+    if (filters.categoryId !== null) params.append('categoryId',     filters.categoryId)
+    if (filters.locationId !== null) params.append('locationId',     filters.locationId)
+    if (filters.workMode)           params.append('workMode',       filters.workMode)
+    if (filters.employmentType)     params.append('employmentType', filters.employmentType)
+
+    const res = await fetch(`${API}/api/home?${params}`)
+
+    if (!res.ok) {
+      // El backend responde 400 con el mensaje de BadRequestException
+      let msg = 'Could not load vacancies. Please try again.'
+      try {
+        const body = await res.json()
+        if (body?.message) msg = body.message
+      } catch { /* respuesta sin cuerpo JSON */ }
+      throw new Error(msg)
+    }
+
     const data = await res.json()
-    vacancies.value     = data.content      || []
-    totalPages.value    = data.totalPages   || 0
-    totalElements.value = data.totalElements || 0
-    currentPage.value   = data.number       || 0
-    stats.totalJobs     = data.totalElements || 0
-  } catch {
-    error.value     = true
-    vacancies.value = []
+    vacancies.value     = data.content ?? []
+    totalPages.value    = data.totalPages ?? 0
+    totalElements.value = data.totalElements ?? 0
+    currentPage.value   = data.number ?? 0
+
+    // El contador global solo tiene sentido sin filtros aplicados
+    if (!hasActiveFilters.value) stats.totalJobs = data.totalElements ?? 0
+  } catch (e) {
+    error.value        = true
+    errorMessage.value = e.message || 'Could not load vacancies. Please try again.'
+    vacancies.value    = []
   } finally {
     loading.value = false
   }
@@ -238,16 +259,40 @@ async function loadData(page = 0) {
 
 async function loadCategories() {
   try {
-    const res  = await fetch('http://localhost:8080/api/categories')
+    const res = await fetch(`${API}/api/categories`)
     if (!res.ok) return
     const data = await res.json()
-    stats.totalCategories = Array.isArray(data) ? data.length : 0
-  } catch { /* silent */ }
+    categories.value      = Array.isArray(data) ? data : []
+    stats.totalCategories = categories.value.length
+  } catch { /* las píldoras quedan solo con "All" */ }
+}
+
+async function loadLocations() {
+  try {
+    const res = await fetch(`${API}/api/locations`)
+    if (!res.ok) return
+    const data = await res.json()
+    locations.value = Array.isArray(data) ? data : []
+  } catch { /* el autocompletado queda vacío */ }
+}
+
+async function loadCompanyCount() {
+  try {
+    const res = await fetch(`${API}/api/companies`)
+    if (!res.ok) return
+    const data = await res.json()
+    stats.totalCompanies = Array.isArray(data) ? data.length : (data.totalElements ?? 0)
+  } catch { /* silencioso */ }
 }
 
 function onPageChange(page) { loadData(page - 1) }
 
-onMounted(() => { loadData(0); loadCategories() })
+onMounted(() => {
+  loadData(0)
+  loadCategories()
+  loadLocations()
+  loadCompanyCount()
+})
 </script>
 
 <template>
@@ -276,10 +321,10 @@ onMounted(() => { loadData(0); loadCategories() })
               <!-- Keyword — fixed half -->
               <div class="search-keyword">
                 <input
-                    v-model="filters.keyword"
+                    v-model="filters.search"
                     type="text"
                     class="search-input form-control"
-                    placeholder="Job title or keyword"
+                    placeholder="keyword or company"
                     @keyup.enter="loadData(0)"
                 />
               </div>
@@ -298,7 +343,7 @@ onMounted(() => { loadData(0); loadCategories() })
                       class="loc-text-input"
                       placeholder="Location"
                       autocomplete="off"
-                      :value="filters.location"
+                      :value="locQuery"
                       @input="onLocInput"
                       @focus="onLocFocus"
                       @blur="onLocBlur"
@@ -311,25 +356,27 @@ onMounted(() => { loadData(0); loadCategories() })
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
-                Search
               </button>
             </div>
 
             <!-- Dropdown: direct child of search-box → inherits full width -->
             <div class="loc-dropdown" :class="{ open: locOpen }">
+              <div v-if="suggestions.length === 0" class="loc-option text-muted">
+                No matching locations
+              </div>
               <div
-                  v-for="city in suggestions"
-                  :key="city"
+                  v-for="loc in suggestions"
+                  :key="loc.id"
                   class="loc-option"
-                  @mousedown.prevent="selectCity(city)"
+                  @mousedown.prevent="selectLocation(loc)"
               >
-                <svg v-if="city === 'Remote'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-if="loc.city === 'Remote'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
                 </svg>
                 <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
                 </svg>
-                {{ city }}
+                {{ locLabel(loc) }}
               </div>
             </div>
           </div>
@@ -357,8 +404,8 @@ onMounted(() => { loadData(0); loadCategories() })
                 <span class="filter-label">Category:</span>
                 <button
                     v-for="opt in categoryOptions" :key="opt.value"
-                    class="f-pill" :class="{ active: filters.category === opt.value }"
-                    @click="setFilter('category', opt.value)"
+                    class="f-pill" :class="{ active: filters.categoryId === opt.value }"
+                    @click="setFilter('categoryId', opt.value)"
                 >{{ opt.label }}</button>
               </div>
 
@@ -377,8 +424,8 @@ onMounted(() => { loadData(0); loadCategories() })
                 <span class="filter-label">Employment:</span>
                 <button
                     v-for="opt in employmentOptions" :key="opt.value"
-                    class="f-pill" :class="{ active: filters.employment === opt.value }"
-                    @click="setFilter('employment', opt.value)"
+                    class="f-pill" :class="{ active: filters.employmentType === opt.value }"
+                    @click="setFilter('employmentType', opt.value)"
                 >{{ opt.label }}</button>
               </div>
 
@@ -423,7 +470,7 @@ onMounted(() => { loadData(0); loadCategories() })
 
     <div class="d-flex align-items-center justify-content-between mb-3">
       <h2 class="section-title mb-0">
-        <span class="section-bar"></span>Featured
+        <span class="section-bar"></span>{{ hasActiveFilters ? 'Results' : 'Featured' }}
         <span class="badge-count ms-2">{{ totalElements }} vacancies</span>
       </h2>
       <RouterLink to="/vacancies/list" class="link-viewall">View all →</RouterLink>
@@ -438,12 +485,15 @@ onMounted(() => { loadData(0); loadCategories() })
 
     <!-- Error -->
     <div v-else-if="error" class="alert alert-danger">
-      Could not load vacancies. Please try again.
+      {{ errorMessage }}
     </div>
 
     <!-- Empty -->
     <div v-else-if="vacancies.length === 0" class="text-center py-5 text-muted">
       No vacancies found with those filters.
+      <div v-if="hasActiveFilters" class="mt-2">
+        <button class="btn btn-sm btn-outline-secondary" @click="clearAllFilters">Clear filters</button>
+      </div>
     </div>
 
     <!-- Cards -->
@@ -465,8 +515,9 @@ onMounted(() => { loadData(0); loadCategories() })
           <div class="flex-fill">
             <div class="d-flex flex-wrap gap-1 mb-2">
               <span class="jh-badge badge-cat">{{ vacancyCategory(vacancy) }}</span>
-              <span class="jh-badge badge-feat">Featured</span>
-              <span class="jh-badge" :class="workModeBadgeClass(vacancy)">{{ vacancyWorkMode(vacancy) }}</span>
+              <span v-if="vacancy.featured" class="jh-badge badge-feat">Featured</span>
+              <span v-if="workModeLabel(vacancy)" class="jh-badge" :class="workModeBadgeClass(vacancy)">{{ workModeLabel(vacancy) }}</span>
+              <span v-if="employmentLabel(vacancy)" class="jh-badge badge-emp">{{ employmentLabel(vacancy) }}</span>
             </div>
 
             <div class="job-title">{{ vacancy.name }}</div>
@@ -482,15 +533,15 @@ onMounted(() => { loadData(0); loadCategories() })
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
-                {{ vacancy.publishedDate || vacancy.date || 'No date' }}
+                {{ vacancy.publishedDate || 'No date' }}
               </span>
-              <span class="status-open d-flex align-items-center gap-1">
-                <span class="status-dot"></span>{{ vacancy.status || 'Open' }}
+              <span class="d-flex align-items-center gap-1" :class="statusClass(vacancy)">
+                <span class="status-dot"></span>{{ statusLabel(vacancy) }}
               </span>
             </div>
 
             <div class="job-desc">
-              {{ vacancy.description || vacancy.details || vacancy.summary || 'No description available.' }}
+              {{ vacancy.description || 'No description available.' }}
             </div>
           </div>
 

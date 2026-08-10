@@ -333,7 +333,7 @@ async function handleSubmit() {
       return
     }
 
-    router.push(`/vacancies/list?${isEdit.value ? 'updated' : 'created'}=true`)
+    await router.push(`/vacancies?${isEdit.value ? 'updated' : 'created'}=true`)
   } catch (err) {
     errors.value = [err.message]
   } finally {
@@ -579,7 +579,7 @@ onMounted(async () => {
 
       <!-- ═══ ACTIONS ═══ -->
       <div class="d-flex justify-content-end gap-2 mt-3 mb-5">
-        <button type="button" class="btn-cancel" @click="router.push('/vacancies/list')">Cancel</button>
+        <button type="button" class="btn-cancel" @click="router.push('/vacancies')">Cancel</button>
         <button type="submit" class="btn-submit" :disabled="saving">
           {{ saving ? 'Saving...' : (isEdit ? 'Update Vacancy' : 'Save Vacancy') }}
         </button>

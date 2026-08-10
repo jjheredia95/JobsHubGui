@@ -61,8 +61,8 @@ const handleSubmit = async () => {
 
     router.push(
         isEditing.value
-            ? `/categories/list?updated=true&name=${encodeURIComponent(category.value.name)}`
-            : '/categories/list?created=true'
+            ? `/categories?updated=true&name=${encodeURIComponent(category.value.name)}`
+            : '/categories?created=true'
     )
   } catch (err) {
     errors.value = [err.message]
@@ -133,7 +133,7 @@ onMounted(() => {
       </div>
 
       <div class="d-flex justify-content-end gap-2 mt-3 mb-5">
-        <button type="button" class="btn-cancel" @click="router.push('/categories/list')">Cancel</button>
+        <button type="button" class="btn-cancel" @click="router.push('/categories')">Cancel</button>
         <button type="submit" title="Save category" class="btn-submit">
           {{ isEditing ? 'Update Category' : 'Save Category' }}
         </button>
