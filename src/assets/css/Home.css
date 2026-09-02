@@ -1,21 +1,23 @@
 /* ── HERO ── */
 .hero {
-    background: #DBEAFE;
-    padding: 4rem 1.5rem 3.5rem;
-    border-bottom: 1px solid #BFDBFE;
+    background: #EEF2FF;
+    padding: 2.25rem 1.5rem 3.5rem;
+    border-bottom: 1px solid #E0E7FF;
 }
-.hero-eyebrow {
-    display: inline-block; background: #F1F5F9; color: #475569;
-    border-radius: 4px; font-size: .7rem; font-weight: 700;
-    letter-spacing: .1em; text-transform: uppercase;
-    padding: .3rem .85rem; margin-bottom: 1.25rem;
-}
+
 h1 {
-    font-size: clamp(1.9rem, 3.5vw, 2.8rem); font-weight: 900;
-    color: #0F172A; line-height: 1.1; letter-spacing: -.04em; margin-bottom: .85rem;
+    font-size: clamp(1.9rem, 3.5vw, 2.8rem); font-weight: 800;
+    color: #0F172A; line-height: 1.1; letter-spacing: -.04em; margin-bottom: 0;
 }
 h1 em { font-style: normal; color: #6366F1; }
-.hero-lead { color: #64748B; font-size: .92rem; }
+
+/* Cancela el gutter vertical de Bootstrap (.row g-4) dentro del hero */
+.hero .row { --bs-gutter-y: 1rem; }
+/* ── HERO SEARCH WRAPPER ── */
+.hero-search-wrap {
+    max-width: 960px;
+    margin-inline: auto;
+}
 
 /* ── SEARCH BOX ── */
 .search-box {
@@ -41,7 +43,7 @@ h1 em { font-style: normal; color: #6366F1; }
 }
 .btn-search {
     background: #6366F1; color: #fff; border: none; border-radius: 10px;
-    font-weight: 700; font-size: .875rem; padding: .7rem 1.4rem;
+    font-weight: 600; font-size: .875rem; padding: .7rem 1.4rem;
     transition: all .2s; white-space: nowrap; cursor: pointer;
     font-family: 'Inter', sans-serif;
 }
@@ -91,7 +93,7 @@ h1 em { font-style: normal; color: #6366F1; }
 .btn-filters {
     display: inline-flex; align-items: center; gap: .45rem;
     border: 1.5px solid #E2E8F0; background: #fff; color: #475569;
-    font-size: .8rem; font-weight: 700; padding: .45rem 1.1rem;
+    font-size: .8rem; font-weight: 600; padding: .45rem 1.1rem;
     border-radius: 100px; cursor: pointer; transition: all .2s; font-family: 'Inter', sans-serif;
 }
 .btn-filters:hover { border-color: #6366F1; color: #6366F1; }
@@ -99,11 +101,11 @@ h1 em { font-style: normal; color: #6366F1; }
 .filters-panel { max-height: 0; overflow: hidden; transition: max-height .35s ease, opacity .3s ease; opacity: 0; }
 .filters-panel.open { max-height: 300px; opacity: 1; }
 .filters-panel-inner { padding: 1.1rem 0 .25rem; }
-.filter-row { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; }
-.filter-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #94A3B8; white-space: nowrap; }
+.filter-row { display: flex; align-items: center; justify-content: center; gap: .45rem; flex-wrap: wrap; }
+.filter-label { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #94A3B8; white-space: nowrap; }
 .f-pill {
     border: 1.5px solid #E2E8F0; background: #fff; color: #475569;
-    font-size: .78rem; font-weight: 600; padding: .3rem .9rem;
+    font-size: .78rem; font-weight: 500; padding: .3rem .9rem;
     border-radius: 100px; cursor: pointer; transition: all .15s; font-family: 'Inter', sans-serif;
 }
 .f-pill:hover  { border-color: #6366F1; color: #6366F1; }
@@ -113,15 +115,15 @@ h1 em { font-style: normal; color: #6366F1; }
 .stats-strip { background: #fff; border-bottom: 1px solid #E2E8F0; }
 .stats-item { padding: 1.5rem 1rem; text-align: center; border-right: 1px solid #F1F5F9; transition: background .15s; }
 .stats-item:hover { background: #F8FAFC; }
-.stats-num { font-size: 1.75rem; font-weight: 900; color: #0F172A; letter-spacing: -.04em; line-height: 1; margin-bottom: .3rem; }
+.stats-num { font-size: 1.75rem; font-weight: 800; color: #0F172A; letter-spacing: -.04em; line-height: 1; margin-bottom: .3rem; }
 .stats-num span { color: #6366F1; font-size: 1.3rem; }
-.stats-label { font-size: .75rem; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: .07em; }
+.stats-label { font-size: .75rem; font-weight: 500; color: #94A3B8; text-transform: uppercase; letter-spacing: .07em; }
 
 /* ── SECTION HEADER ── */
 .section-bar { width: 4px; height: 22px; background: #6366F1; border-radius: 2px; display: inline-block; margin-right: .5rem; vertical-align: middle; }
-.section-title { font-size: 1.3rem; font-weight: 800; color: #0F172A; letter-spacing: -.02em; }
-.badge-count { background: #EEF2FF; color: #6366F1; font-size: .72rem; font-weight: 700; padding: .2rem .65rem; border-radius: 100px; }
-.link-viewall { color: #6366F1; font-size: .8rem; font-weight: 600; text-decoration: none; }
+.section-title { font-size: 1.3rem; font-weight: 700; color: #0F172A; letter-spacing: -.02em; }
+.badge-count { background: #EEF2FF; color: #6366F1; font-size: .72rem; font-weight: 600; padding: .2rem .65rem; border-radius: 100px; }
+.link-viewall { color: #6366F1; font-size: .8rem; font-weight: 500; text-decoration: none; }
 .link-viewall:hover { color: #4F46E5; }
 
 /* ── JOB CARD ── */
@@ -132,28 +134,31 @@ h1 em { font-style: normal; color: #6366F1; }
 }
 .job-card:hover {
     border-color: #6366F1 !important;
-    box-shadow: 0 4px 16px rgba(99,102,241,.18), 0 8px 32px rgba(0,0,0,.07) !important;
-    transform: translateY(-2px); color: inherit;
+    box-shadow: 0 4px 16px rgba(99,102,241,.18) !important;
+    color: inherit;
 }
 .company-logo {
     width: 48px; height: 48px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem; font-weight: 800; color: #fff; flex-shrink: 0;
+    font-size: 1.2rem; font-weight: 700; color: #fff; flex-shrink: 0;
 }
-.job-title  { font-size: 1rem; font-weight: 700; color: #0F172A; }
+.job-title  { font-size: 1rem; font-weight: 600; color: #0F172A; }
 .job-desc   { font-size: .8rem; color: #64748B; margin-top: .35rem; line-height: 1.6; }
 .job-meta-item { font-size: .76rem; color: #64748B; display: flex; align-items: center; gap: .3rem; }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; display: inline-block; }
-.status-open { color: #10B981; font-size: .74rem; font-weight: 600; }
-.jh-badge { font-size: .65rem; font-weight: 700; padding: .2rem .55rem; border-radius: 5px; text-transform: uppercase; letter-spacing: .04em; border: none; }
+.status-open { color: #10B981; font-size: .74rem; font-weight: 500; }
+.status-closed { color: #94A3B8; font-size: .74rem; font-weight: 500; }
+.status-closed .status-dot { background: #94A3B8; }
+.jh-badge { font-size: .65rem; font-weight: 600; padding: .2rem .55rem; border-radius: 5px; text-transform: uppercase; letter-spacing: .04em; border: none; }
 .badge-cat       { background: #EFF6FF; color: #3B82F6; }
 .badge-feat      { background: #FFFBEB; color: #D97706; }
 .badge-wm-remote { background: #F5F3FF; color: #7C3AED; }
 .badge-wm-hybrid { background: #EFF6FF; color: #2563EB; }
 .badge-wm-onsite { background: #F0FDF4; color: #16A34A; }
+.badge-emp       { background: #F8FAFC; color: #64748B; }
 .btn-view {
     background: #EEF2FF; color: #6366F1; border-radius: 8px;
-    font-size: .78rem; font-weight: 600; padding: .45rem 1rem; white-space: nowrap; cursor: pointer;
+    font-size: .78rem; font-weight: 500; padding: .45rem 1rem; white-space: nowrap; cursor: pointer;
 }
 .job-card:hover .btn-view { background: #6366F1; color: #fff; }
 .job-date { font-size: .7rem; color: #94A3B8; font-weight: 500; }

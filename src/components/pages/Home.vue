@@ -1,11 +1,15 @@
 <script setup>
 import "../../assets/css/Home.css"
-import { onMounted, reactive, ref, computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { onMounted, reactive, ref, computed, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import Pagination from '../common/Pagination.vue'
 
 // ── Config ─────────────────────────────────────────────
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
+// ── Router ─────────────────────────────────────────────
+const route  = useRoute()
+const router = useRouter()
 
 // ── State ──────────────────────────────────────────────
 const vacancies      = ref([])
@@ -97,13 +101,13 @@ function selectLocation(loc) {
   filters.locationId = loc.id
   locQuery.value     = locLabel(loc)
   locOpen.value      = false
-  loadData(0)
+  resetToFirstPage()
 }
 
 function clearLocation() {
   filters.locationId = null
   locQuery.value     = ''
-  loadData(0)
+  resetToFirstPage()
 }
 
 // ── Filtros ────────────────────────────────────────────
@@ -111,7 +115,7 @@ function toggleFilters() { filtersOpen.value = !filtersOpen.value }
 
 function setFilter(key, value) {
   filters[key] = value
-  loadData(0)              // aplicar de inmediato y volver a página 1
+  resetToFirstPage()       // aplicar de inmediato y volver a página 1
 }
 
 const hasActiveFilters = computed(() =>
@@ -126,7 +130,7 @@ function clearAllFilters() {
   filters.workMode       = ''
   filters.employmentType = ''
   locQuery.value         = ''
-  loadData(0)
+  resetToFirstPage()
 }
 
 // ── Helpers de la tarjeta ──────────────────────────────
@@ -285,10 +289,32 @@ async function loadCompanyCount() {
   } catch { /* silencioso */ }
 }
 
-function onPageChange(page) { loadData(page - 1) }
+// ── Paginación vía URL ─────────────────────────────────
+// La página vive en la query string (?page=2). Así el logo de JobsHub
+// ("/") es una ruta distinta y el botón atrás del navegador funciona.
+function pageFromRoute() {
+  const n = Number(route.query.page)
+  return Number.isFinite(n) && n > 1 ? n - 1 : 0
+}
+
+function onPageChange(page) {
+  router.push({ query: { ...route.query, page: page > 1 ? page : undefined } })
+}
+
+// Vuelve a la página 1. Si no hay ?page en la URL, router.push no
+// dispararía el watcher, así que se recarga directamente.
+function resetToFirstPage() {
+  if (route.query.page) router.push({ query: { ...route.query, page: undefined } })
+  else loadData(0)
+}
+
+watch(() => route.query.page, () => {
+  loadData(pageFromRoute())
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+})
 
 onMounted(() => {
-  loadData(0)
+  loadData(pageFromRoute())
   loadCategories()
   loadLocations()
   loadCompanyCount()
@@ -302,17 +328,15 @@ onMounted(() => {
   ══════════════════════════════════════ -->
   <section class="hero">
     <div class="container" style="max-width:1320px;">
-      <div class="row align-items-center g-4">
+      <div class="row g-4">
 
-        <!-- LEFT: Title -->
-        <div class="col-lg-3 text-lg-start text-center">
-          <div class="hero-eyebrow">Now Hiring · {{ stats.totalJobs }}+ Open Roles</div>
-          <h1>The job you want is <em>here.</em></h1>
-          <p class="hero-lead">Search by keyword, location, category, or work mode.</p>
+        <!-- TOP: Title -->
+        <div class="col-12 text-center">
+          <h1>Find the job you're  <em>looking for.</em></h1>
         </div>
 
-        <!-- RIGHT: Search + Filters -->
-        <div class="col-lg-9">
+        <!-- BELOW: Search + Filters -->
+        <div class="col-12 hero-search-wrap">
 
           <!-- Search box -->
           <div class="search-box" :class="{ 'loc-open': locOpen }">
@@ -325,7 +349,7 @@ onMounted(() => {
                     type="text"
                     class="search-input form-control"
                     placeholder="keyword or company"
-                    @keyup.enter="loadData(0)"
+                    @keyup.enter="resetToFirstPage()"
                 />
               </div>
 
@@ -352,7 +376,7 @@ onMounted(() => {
               </div>
 
               <!-- Search button -->
-              <button class="btn-search d-flex align-items-center gap-2" @click="loadData(0)">
+              <button class="btn-search d-flex align-items-center gap-2" @click="resetToFirstPage()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
@@ -382,7 +406,7 @@ onMounted(() => {
           </div>
 
           <!-- Filters toggle -->
-          <div class="mt-3">
+          <div class="mt-3 text-center">
             <button class="btn-filters" :class="{ open: filtersOpen }" @click="toggleFilters">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
@@ -528,12 +552,6 @@ onMounted(() => {
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
                 </svg>
                 {{ vacancyLocations(vacancy).join(', ') }}
-              </span>
-              <span class="job-meta-item">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                {{ vacancy.publishedDate || 'No date' }}
               </span>
               <span class="d-flex align-items-center gap-1" :class="statusClass(vacancy)">
                 <span class="status-dot"></span>{{ statusLabel(vacancy) }}

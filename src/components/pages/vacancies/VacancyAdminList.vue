@@ -1,15 +1,15 @@
-
 <script setup>
 
 import "../../../assets/css/VacancyAdminList.css"
-import { onMounted, ref } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { onMounted, ref, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import Pagination from "../../common/Pagination.vue";
 
 const vacancies = ref([])
 const loading = ref(true)
 const error = ref('')
 const route = useRoute()
+const router = useRouter()
 const created = ref(route.query.created === 'true')
 const updated = ref(route.query.updated === 'true')
 const deletingId = ref(null)
@@ -30,6 +30,8 @@ function statusClass(status) {
 }
 
 async function loadVacancies(page = 0) {
+  loading.value = true
+  error.value = ''
   try {
     const response = await fetch(`http://localhost:8080/api/vacancies?page=${page}&size=${pageSize}`)
     if (!response.ok) {
@@ -73,7 +75,7 @@ async function deleteVacancy(id) {
     vacancies.value = vacancies.value.filter(vacancy => vacancy.id !== id)
 
     if (vacancies.value.length === 0 && currentPage.value > 0) {
-      await loadVacancies(currentPage.value - 1)
+      goToPage(currentPage.value - 1)
     } else {
       await loadVacancies(currentPage.value)
     }
@@ -84,12 +86,30 @@ async function deleteVacancy(id) {
   }
 }
 
-function onPageChange(page) {
-  loadVacancies(page - 1)
+// ── Paginación vía URL ─────────────────────────────────
+// La página vive en la query string (?page=2), de modo que el enlace
+// "Jobs" de la navbar (/vacancies) sea una ruta distinta y navegue.
+function pageFromRoute() {
+  const n = Number(route.query.page)
+  return Number.isFinite(n) && n > 1 ? n - 1 : 0
 }
 
+function goToPage(zeroBased) {
+  const page = zeroBased + 1
+  router.push({ query: page > 1 ? { page } : {} })
+}
+
+function onPageChange(page) {
+  goToPage(page - 1)
+}
+
+watch(() => route.query.page, () => {
+  loadVacancies(pageFromRoute())
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+})
+
 onMounted(() => {
-  loadVacancies(0)
+  loadVacancies(pageFromRoute())
 })
 </script>
 
