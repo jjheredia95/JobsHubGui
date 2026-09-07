@@ -1,30 +1,28 @@
 <script setup>
 
 import {onMounted, ref} from 'vue'
-  import '../../assets/css/Home.css'
-  import Pagination from "../common/Pagination.vue";
+import '../../assets/css/Home.css'
+//import Pagination from "../common/Pagination.vue";
 
   const vacancies = ref([])
   const loading = ref(false)
   const error = ref('')
 
-  const currentPage = ref(0)
+  /*const currentPage = ref(0)
   const totalPages = ref(0)
-  const totalElements = ref(0)
+  const totalElements = ref(0)*/
 
   async function loadVacancies(page = 0, pageSize = 10) {
     loading.value = true
 
     try {
-      const response = await fetch(`http://localhost:8080/api/home?page=${page}&size=${pageSize}`)
+      const response = await fetch(`http://localhost:8080/api/home`)
 
       if (!response.ok) {
         throw new Error('Could not load vacancies.')
       }
 
-      const data = await response.json();
-      vacancies.value = data.content
-
+      vacancies.value = await response.json()
 
     } catch (err) {
       error.value = err.message
@@ -90,7 +88,7 @@ import {onMounted, ref} from 'vue'
     </div>
 
     <div class="d-flex flex-column gap-3">
-      <a href="#" class="job-card card border p-3">
+      <a href="#" class="job-card card border p-3" v-for="vacancy in vacancies" :key="vacancy.id">
         <div class="d-flex align-items-start gap-3">
           <div
               class="company-logo"
@@ -101,21 +99,19 @@ import {onMounted, ref} from 'vue'
 
           <div class="flex-fill">
             <div class="d-flex flex-wrap gap-1 mb-2">
-              <span class="jh-badge badge-cat">Technology placeholder</span>
+              <span class="jh-badge badge-cat">{{vacancy.category}}</span>
             </div>
 
-            <div class="job-title">React developer placeholder</div>
+            <div class="job-title">{{vacancy.name}}</div>
 
             <div class="d-flex flex-wrap gap-3 mt-1">
               <span class="d-flex align-items-center gap-1 status-open">
-                <span class="status-dot"></span>
-                Open
+                <span :class="'status-' + vacancy.status.toLowerCase()"></span> <!--dynamic css class-->
+                {{ vacancy.status.charAt(0) +  vacancy.status.slice(1).toLowerCase()}}
               </span>
             </div>
 
-            <div class="job-desc">
-              This is a placeholder of a brief vacancy description
-            </div>
+            <div class="job-desc">{{vacancy.description}}</div>
           </div>
 
           <div class="d-none d-md-flex flex-column align-items-end gap-2 flex-shrink-0">
