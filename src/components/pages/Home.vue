@@ -1,8 +1,8 @@
 <script setup>
 
-import {onMounted, ref} from 'vue'
-import '../../assets/css/Home.css'
-//import Pagination from "../common/Pagination.vue";
+  import {onMounted, ref} from 'vue'
+  import '../../assets/css/Home.css'
+  //import Pagination from "../common/Pagination.vue";
 
   const vacancies = ref([])
   const loading = ref(false)
@@ -12,17 +12,19 @@ import '../../assets/css/Home.css'
   const totalPages = ref(0)
   const totalElements = ref(0)*/
 
-  async function loadVacancies(page = 0, pageSize = 10) {
+  async function loadVacancies() {
     loading.value = true
+    error.value = ''
 
     try {
       const response = await fetch(`http://localhost:8080/api/home`)
 
       if (!response.ok) {
-        throw new Error('Could not load vacancies.')
+        throw new Error('Vacancies could not be loaded.')
       }
 
       vacancies.value = await response.json()
+      console.log(vacancies.value)
 
     } catch (err) {
       error.value = err.message
@@ -31,10 +33,17 @@ import '../../assets/css/Home.css'
     }
   }
 
+  function daysAgo(dateString) {
+    const published = new Date(dateString)
+    const today = new Date()
+    const diffMs = today - published
+    const days = Math.floor(diffMs / 86400000)
+    return `${days} days ago`
+  }
+
   onMounted(() => {
     loadVacancies()
   })
-
 
 </script>
 
@@ -87,40 +96,52 @@ import '../../assets/css/Home.css'
       <a href="#" class="link-viewall">View all →</a>
     </div>
 
-    <div class="d-flex flex-column gap-3">
-      <a href="#" class="job-card card border p-3" v-for="vacancy in vacancies" :key="vacancy.id">
-        <div class="d-flex align-items-start gap-3">
-          <div
-              class="company-logo"
-              style="background: linear-gradient(135deg,#0EA5E9,#0284C7);"
-          >
-            R
-          </div>
+    <div v-if="loading">
+      Loading Vacancies...
+    </div>
 
-          <div class="flex-fill">
-            <div class="d-flex flex-wrap gap-1 mb-2">
-              <span class="jh-badge badge-cat">{{vacancy.category}}</span>
+    <div v-else-if="error" class="alert alert-danger" role="alert">
+      {{ error }}
+    </div>
+
+    <div v-else>
+      <div class="d-flex flex-column gap-3">
+        <a href="#" class="job-card card border p-3" v-for="vacancy in vacancies" :key="vacancy.id">
+          <div class="d-flex align-items-start gap-3">
+            <div
+                class="company-logo"
+                style="background: linear-gradient(135deg,#0EA5E9,#0284C7);"
+            >
+              {{ vacancy.name[0] }}
             </div>
 
-            <div class="job-title">{{vacancy.name}}</div>
+            <div class="flex-fill">
+              <div class="d-flex flex-wrap gap-1 mb-2">
+                <span class="jh-badge badge-cat">{{vacancy.category}}</span>
+              </div>
 
-            <div class="d-flex flex-wrap gap-3 mt-1">
+              <div class="job-title">{{vacancy.name}}</div>
+
+              <div class="d-flex flex-wrap gap-3 mt-1">
               <span class="d-flex align-items-center gap-1" :class="'status-' + vacancy.status.toLowerCase()">
                 <span class="status-dot"></span> <!--dynamic css class-->
                 {{ vacancy.status.charAt(0) +  vacancy.status.slice(1).toLowerCase()}}
               </span>
+              </div>
+
+              <div class="job-desc">{{vacancy.description}}</div>
             </div>
 
-            <div class="job-desc">{{vacancy.description}}</div>
+            <div class="d-none d-md-flex flex-column align-items-end gap-2 flex-shrink-0">
+              <span class="btn-view">View details →</span>
+              <span class="job-date">{{ daysAgo(vacancy.publishedDate) }}</span>
+            </div>
           </div>
-
-          <div class="d-none d-md-flex flex-column align-items-end gap-2 flex-shrink-0">
-            <span class="btn-view">View details →</span>
-            <span class="job-date">122 days ago</span>
-          </div>
-        </div>
-      </a>
+        </a>
+      </div>
     </div>
+
+
 
     <!-- PAGINATION -->
     <nav class="pagination-nav" aria-label="Pagination">
