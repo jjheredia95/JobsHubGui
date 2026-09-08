@@ -105,8 +105,8 @@ import '../../assets/css/Home.css'
             <div class="job-title">{{vacancy.name}}</div>
 
             <div class="d-flex flex-wrap gap-3 mt-1">
-              <span class="d-flex align-items-center gap-1 status-open">
-                <span :class="'status-' + vacancy.status.toLowerCase()"></span> <!--dynamic css class-->
+              <span class="d-flex align-items-center gap-1" :class="'status-' + vacancy.status.toLowerCase()">
+                <span class="status-dot"></span> <!--dynamic css class-->
                 {{ vacancy.status.charAt(0) +  vacancy.status.slice(1).toLowerCase()}}
               </span>
             </div>

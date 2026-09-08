@@ -147,8 +147,13 @@ h1 em { font-style: normal; color: #6366F1; }
 .job-meta-item { font-size: .76rem; color: #64748B; display: flex; align-items: center; gap: .3rem; }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; display: inline-block; }
 .status-open { color: #10B981; font-size: .74rem; font-weight: 500; }
-.status-closed { color: #94A3B8; font-size: .74rem; font-weight: 500; }
-.status-closed .status-dot { background: #94A3B8; }
+.status-closed { color: #EF4444; font-size: .74rem; font-weight: 500; }
+.status-published { color: #3B82F6; font-size: .74rem; font-weight: 500; }
+
+.status-closed .status-dot { background: #EF4444; }
+.status-published .status-dot { background: #3B82F6; }
+
+
 .jh-badge { font-size: .65rem; font-weight: 600; padding: .2rem .55rem; border-radius: 5px; text-transform: uppercase; letter-spacing: .04em; border: none; }
 .badge-cat       { background: #EFF6FF; color: #3B82F6; }
 .badge-feat      { background: #FFFBEB; color: #D97706; }
