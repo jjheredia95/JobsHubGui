@@ -8,23 +8,26 @@
   const loading = ref(false)
   const error = ref('')
 
-  /*const currentPage = ref(0)
+  const currentPage = ref(0)
   const totalPages = ref(0)
-  const totalElements = ref(0)*/
+  const totalElements = ref(0)
 
-  async function loadVacancies() {
+  async function loadVacancies(page = 0, size = 4) {
     loading.value = true
     error.value = ''
 
     try {
-      const response = await fetch(`http://localhost:8080/api/home`)
+      const response = await fetch(`http://localhost:8080/api/home?page=${page}&size=${size}`)
 
       if (!response.ok) {
         throw new Error('Vacancies could not be loaded.')
       }
 
-      vacancies.value = await response.json()
-      console.log(vacancies.value)
+      const data = await response.json();
+      vacancies.value = data.content;
+      totalElements.value = data.totalElements;
+      totalPages.value = data.totalPages;
+      currentPage.value = data.number;
 
     } catch (err) {
       error.value = err.message
@@ -39,6 +42,20 @@
     const diffMs = today - published
     const days = Math.floor(diffMs / 86400000)
     return `${days} days ago`
+  }
+
+  function goToPreviousPage() {
+    if (currentPage.value === 0) {
+      return;
+    }
+    loadVacancies(currentPage.value - 1)
+  }
+
+  function goToNextPage() {
+    if (currentPage.value >= totalPages.value - 1) {
+      return;
+    }
+    loadVacancies(currentPage.value + 1)
   }
 
   onMounted(() => {
@@ -146,23 +163,15 @@
     <!-- PAGINATION -->
     <nav class="pagination-nav" aria-label="Pagination">
       <ul class="pagination-list">
-        <li class="pagination-item disabled">
+        <li class="pagination-item" :class="{ disabled: (currentPage === 0)}" @click="goToPreviousPage">
           <span class="pagination-link">« Previous</span>
         </li>
 
-        <li class="pagination-item active">
-          <span class="pagination-link">1</span>
+        <li class="pagination-item" :class="{ active: (n - 1 === currentPage)}" v-for="n in totalPages" :key="n" @click="loadVacancies(n - 1)">
+          <span class="pagination-link">{{n}}</span>
         </li>
 
-        <li class="pagination-item">
-          <span class="pagination-link">2</span>
-        </li>
-
-        <li class="pagination-item">
-          <span class="pagination-link">3</span>
-        </li>
-
-        <li class="pagination-item">
+        <li class="pagination-item" :class="{ disabled: (currentPage === totalPages - 1)}" @click="goToNextPage">
           <span class="pagination-link">Next »</span>
         </li>
       </ul>
