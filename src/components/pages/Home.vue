@@ -12,12 +12,14 @@
   const totalPages = ref(0)
   const totalElements = ref(0)
 
+  const searchTerm = ref("")
+
   async function loadVacancies(page = 0, size = 4) {
     loading.value = true
     error.value = ''
 
     try {
-      const response = await fetch(`http://localhost:8080/api/home?page=${page}&size=${size}`)
+      const response = await fetch(`http://localhost:8080/api/home?description=${searchTerm.value}&page=${page}&size=${size}`)
 
       if (!response.ok) {
         throw new Error('Vacancies could not be loaded.')
@@ -78,10 +80,11 @@
               <input
                   type="text"
                   class="search-input form-control"
-                  placeholder="keyword or description"
+                  placeholder="Enter single keyword (e.g developer, nurse, supervisor...)"
+                  v-model="searchTerm"
               />
 
-              <button class="btn-search d-flex align-items-center gap-2">
+              <button class="btn-search d-flex align-items-center gap-2" @click="loadVacancies()">
                 <i class="fa-solid fa-magnifying-glass"></i>
               </button>
             </div>
