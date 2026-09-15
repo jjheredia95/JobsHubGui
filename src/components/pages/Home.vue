@@ -14,6 +14,27 @@
 
   const searchTerm = ref("")
 
+  const categories = ref([])
+  const categoriesError = ref('')
+
+  async function loadCategories() {
+    categoriesError.value = '';
+
+    try {
+      const response = await fetch('http://localhost:8080/api/categories')
+
+      if (!response.ok) {
+        throw new Error('Categories filter could not be loaded.')
+      }
+
+      categories.value = await response.json();
+
+    } catch (err) {
+      categoriesError.value = err;
+    }
+
+  }
+
   async function loadVacancies(page = 0, size = 4) {
     loading.value = true
     error.value = ''
@@ -62,6 +83,7 @@
 
   onMounted(() => {
     loadVacancies()
+    loadCategories()
   })
 
 </script>
@@ -93,11 +115,7 @@
           <div class="filter-row mt-3 justify-content-center">
             <span class="filter-label">Category:</span>
             <button class="f-pill active">All</button>
-            <button class="f-pill">Technology</button>
-            <button class="f-pill">Healthcare</button>
-            <button class="f-pill">Finance</button>
-            <button class="f-pill">Education</button>
-            <button class="f-pill">Marketing</button>
+            <button class="f-pill" v-for="category in categories" :key="category.id">{{ category.name }}</button>
           </div>
         </div>
       </div>
