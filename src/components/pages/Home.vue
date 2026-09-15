@@ -16,6 +16,7 @@
 
   const categories = ref([])
   const categoriesError = ref('')
+  const selectedCategoryId = ref(null);
 
   async function loadCategories() {
     categoriesError.value = '';
@@ -35,12 +36,18 @@
 
   }
 
-  async function loadVacancies(page = 0, size = 4) {
+  async function loadVacancies(page = 0, size = 3) {
     loading.value = true
     error.value = ''
 
     try {
-      const response = await fetch(`http://localhost:8080/api/home?description=${searchTerm.value}&page=${page}&size=${size}`)
+
+      let url = `http://localhost:8080/api/home?description=${searchTerm.value}&page=${page}&size=${size}`;
+      if (selectedCategoryId.value !== null) {
+        url += `&categoryId=${selectedCategoryId.value}`;
+      }
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error('Vacancies could not be loaded.')
@@ -114,8 +121,10 @@
 
           <div class="filter-row mt-3 justify-content-center">
             <span class="filter-label">Category:</span>
-            <button class="f-pill active">All</button>
-            <button class="f-pill" v-for="category in categories" :key="category.id">{{ category.name }}</button>
+            <button class="f-pill" :class="{ active: (selectedCategoryId === null)}" @click="selectedCategoryId = null; loadVacancies()">All</button>
+            <button class="f-pill" :class="{ active: (selectedCategoryId === category.id)}" v-for="category in categories" :key="category.id" @click="selectedCategoryId = category.id; loadVacancies()">
+              {{ category.name }}
+            </button>
           </div>
         </div>
       </div>
@@ -128,7 +137,7 @@
       <h2 class="section-title mb-0">
         <span class="section-bar"></span>
         Featured
-        <span class="badge-count ms-2">100 vacancies</span>
+        <span class="badge-count ms-2">{{ totalElements }} vacancies</span>
       </h2>
 
       <a href="#" class="link-viewall">View all →</a>
