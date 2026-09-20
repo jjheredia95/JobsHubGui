@@ -36,7 +36,7 @@
 
   }
 
-  async function loadVacancies(page = 0, size = 3) {
+  async function loadVacancies(page = 0, size = 4) {
     loading.value = true
     error.value = ''
 
@@ -121,7 +121,7 @@
 
           <div class="filter-row mt-3 justify-content-center">
             <span class="filter-label">Category:</span>
-            <button class="f-pill" :class="{ active: (selectedCategoryId === null)}" @click="selectedCategoryId = null; loadVacancies()">All</button>
+            <button class="f-pill" :class="{ active: (selectedCategoryId === null)}" @click="searchTerm=''; selectedCategoryId = null; loadVacancies()">All</button>
             <button class="f-pill" :class="{ active: (selectedCategoryId === category.id)}" v-for="category in categories" :key="category.id" @click="selectedCategoryId = category.id; loadVacancies()">
               {{ category.name }}
             </button>

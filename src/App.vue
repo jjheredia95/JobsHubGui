@@ -1,10 +1,18 @@
 <script setup>
   import { onBeforeUnmount, onMounted, ref } from 'vue'
-  import { RouterView, RouterLink } from 'vue-router'
+  import { RouterView, RouterLink, useRoute } from 'vue-router'
   import { Collapse } from 'bootstrap'
 
   const navbarRef = ref(null)
   const menuRef   = ref(null)
+  const route = useRoute()
+
+  function goHome() {
+    if (route.path === '/') {
+      window.location.href = '/'
+    }
+  }
+
 
   const closeNavbar = () => {
     if (!menuRef.value?.classList.contains('show')) return
@@ -26,7 +34,7 @@
   <nav ref="navbarRef" class="jh-navbar navbar navbar-expand-lg sticky-top px-3 px-md-4">
 
     <!-- Brand -->
-    <RouterLink class="jh-brand navbar-brand" to="/">
+    <RouterLink class="jh-brand navbar-brand" to="/" @click="goHome">
       Jobs<span>Hub</span>
     </RouterLink>
 
