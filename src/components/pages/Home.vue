@@ -2,7 +2,18 @@
 
   import {onMounted, ref} from 'vue'
   import '../../assets/css/Home.css'
+  import { computed } from 'vue'
   //import Pagination from "../common/Pagination.vue";
+
+  const visiblePages = computed(() => {
+    const windowSize = 3
+    const blockStart = Math.floor(currentPage.value / windowSize) * windowSize + 1
+    const pages = []
+    for (let i = blockStart; i < blockStart + windowSize && i <= totalPages.value; i++) {
+      pages.push(i)
+    }
+    return pages
+  })
 
   const vacancies = ref([])
   const loading = ref(false)
@@ -11,12 +22,14 @@
   const currentPage = ref(0)
   const totalPages = ref(0)
   const totalElements = ref(0)
+  const pageSize = ref(3)
 
   const searchTerm = ref("")
 
   const categories = ref([])
   const categoriesError = ref('')
   const selectedCategoryId = ref(null);
+  const all = ref(false)
 
   async function loadCategories() {
     categoriesError.value = '';
@@ -36,13 +49,22 @@
 
   }
 
-  async function loadVacancies(page = 0, size = 4) {
+  async function loadVacancies(page = 0, size = pageSize.value) {
     loading.value = true
     error.value = ''
 
     try {
 
-      let url = `http://localhost:8080/api/home?description=${searchTerm.value}&page=${page}&size=${size}`;
+      let url = `http://localhost:8080/api/home?&page=${page}&size=${size}`;
+
+      if (searchTerm.value) {
+        url += `&description=${searchTerm.value}`
+      }
+
+      if (all.value) {
+        url += `&all=true`
+      }
+
       if (selectedCategoryId.value !== null) {
         url += `&categoryId=${selectedCategoryId.value}`;
       }
@@ -121,8 +143,15 @@
 
           <div class="filter-row mt-3 justify-content-center">
             <span class="filter-label">Category:</span>
-            <button class="f-pill" :class="{ active: (selectedCategoryId === null)}" @click="searchTerm=''; selectedCategoryId = null; loadVacancies()">All</button>
-            <button class="f-pill" :class="{ active: (selectedCategoryId === category.id)}" v-for="category in categories" :key="category.id" @click="selectedCategoryId = category.id; loadVacancies()">
+            <button class="f-pill"
+                    :class="{ active: all }"
+                    @click="all = true; searchTerm=''; selectedCategoryId = null; pageSize = 10; loadVacancies()">
+              All
+            </button>
+            <button class="f-pill"
+                    :class="{ active: (selectedCategoryId === category.id)}"
+                    v-for="category in categories" :key="category.id"
+                    @click="selectedCategoryId = category.id; all = false; pageSize = 3; loadVacancies()">
               {{ category.name }}
             </button>
           </div>
@@ -197,7 +226,7 @@
           <span class="pagination-link">« Previous</span>
         </li>
 
-        <li class="pagination-item" :class="{ active: (n - 1 === currentPage)}" v-for="n in totalPages" :key="n" @click="loadVacancies(n - 1)">
+        <li class="pagination-item" :class="{ active: (n - 1 === currentPage)}" v-for="n in visiblePages" :key="n" @click="loadVacancies(n - 1)">
           <span class="pagination-link">{{n}}</span>
         </li>
 
