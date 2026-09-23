@@ -111,6 +111,16 @@ h1 em { font-style: normal; color: #6366F1; }
 .f-pill:hover  { border-color: #6366F1; color: #6366F1; }
 .f-pill.active { background: #6366F1; border-color: #6366F1; color: #fff; }
 
+.clear-filter {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+.clear-filter:hover {
+    background-color: #df4b5a;
+    color: white;
+}
+
 /* ── STATS ── */
 .stats-strip { background: #fff; border-bottom: 1px solid #E2E8F0; }
 .stats-item { padding: 1.5rem 1rem; text-align: center; border-right: 1px solid #F1F5F9; transition: background .15s; }

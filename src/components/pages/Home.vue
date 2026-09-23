@@ -19,6 +19,7 @@
   const loading = ref(false)
   const error = ref('')
 
+  //Pagination variables
   const currentPage = ref(0)
   const totalPages = ref(0)
   const totalElements = ref(0)
@@ -30,6 +31,8 @@
   const categoriesError = ref('')
   const selectedCategoryId = ref(null);
   const all = ref(false)
+
+  const sectionTitle = ref('Featured')
 
   async function loadCategories() {
     categoriesError.value = '';
@@ -110,6 +113,27 @@
     loadVacancies(currentPage.value + 1)
   }
 
+  // Clear filters button
+  function clearFilters() {
+    all.value = false;
+    selectedCategoryId.value = null;
+    searchTerm.value = '';
+    pageSize.value = 3;
+    sectionTitle.value = 'Featured'
+    loadVacancies();
+  }
+
+  // Search button
+  function searchVacancies() {
+    all.value = false
+
+    if (selectedCategoryId.value === null) {
+      sectionTitle.value = 'Search Results'
+    }
+
+    loadVacancies()
+  }
+
   onMounted(() => {
     loadVacancies()
     loadCategories()
@@ -135,7 +159,9 @@
                   v-model="searchTerm"
               />
 
-              <button class="btn-search d-flex align-items-center gap-2" @click="loadVacancies()">
+              <button
+                  class="btn-search d-flex align-items-center gap-2"
+                  @click="searchVacancies()">
                 <i class="fa-solid fa-magnifying-glass"></i>
               </button>
             </div>
@@ -145,14 +171,32 @@
             <span class="filter-label">Category:</span>
             <button class="f-pill"
                     :class="{ active: all }"
-                    @click="all = true; searchTerm=''; selectedCategoryId = null; pageSize = 10; loadVacancies()">
+                    @click="
+                    all = true;
+                    searchTerm='';
+                    selectedCategoryId = null;
+                    sectionTitle = 'All';
+                    pageSize = 10;
+                    loadVacancies()">
               All
             </button>
             <button class="f-pill"
                     :class="{ active: (selectedCategoryId === category.id)}"
                     v-for="category in categories" :key="category.id"
-                    @click="selectedCategoryId = category.id; all = false; pageSize = 3; loadVacancies()">
+                    @click="
+                    selectedCategoryId = category.id;
+                    all = false;
+                    sectionTitle = category.name;
+                    pageSize = 3;
+                    loadVacancies()">
               {{ category.name }}
+            </button>
+            <button
+                v-if="all || selectedCategoryId !== null || searchTerm"
+                class="f-pill clear-filter"
+                @click="clearFilters()"
+            >
+              Clear filters
             </button>
           </div>
         </div>
@@ -165,11 +209,9 @@
     <div class="d-flex align-items-center justify-content-between mb-3">
       <h2 class="section-title mb-0">
         <span class="section-bar"></span>
-        Featured
+        {{ sectionTitle }}
         <span class="badge-count ms-2">{{ totalElements }} vacancies</span>
       </h2>
-
-      <a href="#" class="link-viewall">View all →</a>
     </div>
 
     <div v-if="loading">
@@ -209,7 +251,7 @@
             </div>
 
             <div class="d-none d-md-flex flex-column align-items-end gap-2 flex-shrink-0">
-              <span class="btn-view">View details →</span>
+              <router-link :to="`/vacancies/details/${vacancy.id}`" class="btn-view">Details →</router-link>
               <span class="job-date">{{ daysAgo(vacancy.publishedDate) }}</span>
             </div>
           </div>
