@@ -14,6 +14,8 @@ const error = ref("");
 
 async function loadVacancyDetails() {
   loading.value = true;
+  error.value = "";
+
   try {
     const response = await fetch(
       `http://localhost:8080/api/vacancies/details/${id}`,
@@ -37,6 +39,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <h1>VACANCY DETAILS ESTÁ MONTANDO</h1>
   <!-- ── PAGE HEADER ── -->
   <div class="page-header">
     <div class="container" style="max-width: 1060px">
@@ -77,9 +80,13 @@ onMounted(() => {
     </a>
   </div>
 
-  <div v-if="loading">Loading...</div>
-
-  <div v-else-if="error" class="alert alert-danger" role="alert">
+  <div v-if="loading" style="text-align: center">Loading...</div>
+  <div
+    v-else-if="error"
+    style="text-align: center"
+    class="alert alert-danger"
+    role="alert"
+  >
     {{ error }}
   </div>
 
@@ -89,13 +96,13 @@ onMounted(() => {
       <div>
         <!-- Vacancy header -->
         <div>
-          <h1 class="page-title">Software Developer</h1>
+          <h1 class="page-title">{{ vacancy.name }}</h1>
 
           <div class="d-flex flex-wrap gap-2 mt-2">
-            <span class="jh-badge badge-status">Open</span>
-            <span class="jh-badge badge-wm">Remote</span>
-            <span class="jh-badge badge-emp">Full Time</span>
-            <span class="jh-badge badge-sal">$80,000</span>
+            <span class="jh-badge badge-status">{{ vacancy.status }}</span>
+            <span class="jh-badge badge-wm">{{ vacancy.workMode }}</span>
+            <span class="jh-badge badge-emp">{{ vacancy.employmentType }}</span>
+            <span class="jh-badge badge-sal">${{ vacancy.salary }}</span>
           </div>
         </div>
 
@@ -125,8 +132,14 @@ onMounted(() => {
 
                 <span class="meta-label">Locations</span>
 
-                <div class="d-flex flex-wrap gap-1">
-                  <span class="jh-badge badge-loc"> 📍 New York, NY </span>
+                <div
+                  class="d-flex flex-wrap gap-1"
+                  v-for="location in vacancy.locations"
+                  :key="location.id"
+                >
+                  <span class="jh-badge badge-loc">
+                    📍 {{ location.city }}, {{ location.state }}
+                  </span>
                 </div>
               </div>
 
