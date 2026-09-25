@@ -1,4 +1,3 @@
-```vue
 <script setup>
 import "../../../assets/css/VacancyDetaiils.css";
 import { useRoute } from "vue-router";
@@ -9,7 +8,7 @@ const id = route.params.id;
 
 // Initial States
 const vacancy = ref(null);
-const loading = ref(false);
+const loading = ref(true);
 const error = ref("");
 
 async function loadVacancyDetails() {
@@ -39,7 +38,6 @@ onMounted(() => {
 </script>
 
 <template>
-  <h1>VACANCY DETAILS ESTÁ MONTANDO</h1>
   <!-- ── PAGE HEADER ── -->
   <div class="page-header">
     <div class="container" style="max-width: 1060px">
