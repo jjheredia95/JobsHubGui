@@ -1,7 +1,10 @@
 <script setup>
 import "../../../assets/css/VacancyDetaiils.css";
 import { useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 import { ref, onMounted } from "vue";
+
+const router = useRouter();
 
 const route = useRoute();
 const id = route.params.id;
@@ -35,6 +38,24 @@ async function loadVacancyDetails() {
 onMounted(() => {
   loadVacancyDetails();
 });
+
+function goBack() {
+  router.back();
+}
+
+function formatDate(dateString) {
+  if (!dateString) {
+    return "TBA";
+  }
+
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "2-digit",
+    timeZone: "UTC",
+  }).format(date);
+}
 </script>
 
 <template>
@@ -60,9 +81,10 @@ onMounted(() => {
   </div>
 
   <!-- Back to jobs -->
+  <!-- TODO: DOES NOT PRESERVE FILTERS -->
   <div class="container pt-3" style="max-width: 1060px">
-    <a href="#" class="back-link">
-      <svg
+    <a href="#" class="back-link" @click.prevent="goBack()"
+      ><svg
         width="14"
         height="14"
         viewBox="0 0 24 24"
@@ -71,11 +93,9 @@ onMounted(() => {
         stroke-width="2"
       >
         <line x1="19" y1="12" x2="5" y2="12" />
-        <polyline points="12 19 5 12 12 5" />
-      </svg>
-
-      Back to jobs
-    </a>
+        <polyline points="12 19 5 12 12 5" /></svg
+      >Back to jobs</a
+    >
   </div>
 
   <div v-if="loading" style="text-align: center">Loading...</div>
@@ -158,8 +178,7 @@ onMounted(() => {
                 </svg>
 
                 <span class="meta-label">Published</span>
-
-                September 23, 2026
+                {{ formatDate(vacancy.publishedDate) }}
               </div>
 
               <!-- Open date -->
@@ -177,8 +196,7 @@ onMounted(() => {
                 </svg>
 
                 <span class="meta-label">Open date</span>
-
-                September 23, 2026
+                {{ formatDate(vacancy.openDate) }}
               </div>
 
               <!-- Close date -->
@@ -196,8 +214,7 @@ onMounted(() => {
                 </svg>
 
                 <span class="meta-label">Close date</span>
-
-                October 23, 2026
+                {{ formatDate(vacancy.closeDate) }}
               </div>
 
               <!-- Category -->
@@ -218,16 +235,12 @@ onMounted(() => {
 
                 <span class="meta-label">Category</span>
 
-                Software Development
+                {{ vacancy.category }}
               </div>
 
               <hr class="detail-divider" />
 
-              <p class="desc-text">
-                We are looking for a talented software developer to join our
-                team. The ideal candidate will help design, develop, test, and
-                maintain software applications.
-              </p>
+              <p class="desc-text">{{ vacancy.description }}.</p>
             </div>
 
             <!-- Job details -->
@@ -238,9 +251,7 @@ onMounted(() => {
               </div>
 
               <p class="desc-text" style="white-space: pre-line">
-                This is a full-time software development position. The
-                successful candidate will work with the development team to
-                build and maintain modern web applications.
+                {{ vacancy.details }}
               </p>
             </div>
           </div>
@@ -268,7 +279,7 @@ onMounted(() => {
               </button>
 
               <div class="apply-deadline">
-                Application closes October 23, 2026
+                Application closes {{ formatDate(vacancy.closeDate) }}
               </div>
             </div>
 
@@ -280,22 +291,25 @@ onMounted(() => {
               </div>
 
               <div class="d-flex align-items-start gap-3 mb-3">
-                <div class="company-logo-box">J</div>
+                <div class="company-logo-box">
+                  {{ vacancy.company.name[0] }}
+                </div>
 
                 <div>
-                  <div class="company-name">JobsHub Company</div>
+                  <div class="company-name">{{ vacancy.company.name }}</div>
 
-                  <div class="company-meta">New York, NY</div>
+                  <div class="company-meta">
+                    {{ vacancy.company.headquarters }}
+                  </div>
 
                   <a href="#" target="_blank" class="company-link d-block mt-1">
-                    www.example.com ↗
+                    {{ vacancy.company.website }} ↗
                   </a>
                 </div>
               </div>
 
               <p class="desc-text" style="font-size: 0.8rem">
-                We are a company focused on building modern technology solutions
-                and creating opportunities for talented professionals.
+                {{ vacancy.company.description }}.
               </p>
             </div>
           </div>
