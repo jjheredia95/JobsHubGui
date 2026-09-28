@@ -1,5 +1,18 @@
 <script setup>
 import "../../../assets/css/VacancyAdminList.css";
+import { ref, onMounted } from "vue";
+
+const vacancies = ref([]);
+
+async function loadVacancies() {
+  const response = await fetch("http://localhost:8080/api/vacancies/admin");
+  const data = await response.json();
+  vacancies.value = data.content;
+}
+
+onMounted(() => {
+  loadVacancies();
+});
 </script>
 
 <template>
@@ -143,8 +156,8 @@ import "../../../assets/css/VacancyAdminList.css";
 
         <tbody>
           <!-- Vacancy 1 -->
-          <tr>
-            <td class="id-cell">1</td>
+          <tr v-for="vacancy in vacancies" :key="vacancy.id">
+            <td class="id-cell">{{ vacancy.id }}</td>
 
             <td>
               <div class="company-cell">
@@ -152,135 +165,44 @@ import "../../../assets/css/VacancyAdminList.css";
                   <i class="fa-solid fa-building"></i>
                 </div>
 
-                <span> NYC Department of Education </span>
+                <span> {{ vacancy.companyName }} </span>
               </div>
             </td>
 
             <td class="cat-cell">
-              <span class="category-badge"> Technology </span>
+              <span class="category-badge"> {{ vacancy.categoryName }} </span>
             </td>
 
-            <td class="name-cell">React Software Developer</td>
+            <td class="name-cell">{{ vacancy.name }}</td>
 
-            <td class="date-cell">2026-09-05</td>
+            <td class="date-cell">{{ vacancy.publishedDate }}</td>
 
-            <td class="date-cell">2026-10-05</td>
+            <td class="date-cell">{{ vacancy.closingDate }}</td>
 
             <td>
-              <span class="status-pill status-open">
-                <span class="status-dot"></span>
-                OPEN
-              </span>
-            </td>
-
-            <td>
-              <span class="featured-pill featured-yes">
-                <i class="fa-solid fa-star"></i>
-                Featured
-              </span>
-            </td>
-
-            <td class="actions-cell">
-              <button type="button" class="action-btn action-edit" title="Edit">
-                <i class="fas fa-pencil-alt"></i>
-              </button>
-
-              <button
-                type="button"
-                class="action-btn action-delete"
-                title="Delete"
+              <span
+                class="status-pill status-open"
+                :class="
+                  vacancy.status === 'OPEN'
+                    ? 'status-open'
+                    : vacancy.status === 'PUBLISHED'
+                      ? 'status-published'
+                      : 'status-closed'
+                "
               >
-                <i class="fas fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-
-          <!-- Vacancy 2 -->
-          <tr>
-            <td class="id-cell">88</td>
-
-            <td>
-              <div class="company-cell">
-                <div class="company-icon">
-                  <i class="fa-solid fa-building"></i>
-                </div>
-
-                <span> NYC Department of Education </span>
-              </div>
-            </td>
-
-            <td class="cat-cell">
-              <span class="category-badge"> Technology </span>
-            </td>
-
-            <td class="name-cell">Cloud Infrastructure Engineer</td>
-
-            <td class="date-cell">2026-09-05</td>
-
-            <td class="date-cell">2026-10-05</td>
-
-            <td>
-              <span class="status-pill status-open">
                 <span class="status-dot"></span>
-                OPEN
+                {{ vacancy.status }}
               </span>
             </td>
 
             <td>
-              <span class="featured-pill featured-yes">
-                <i class="fa-solid fa-star"></i>
-                Featured
-              </span>
-            </td>
-
-            <td class="actions-cell">
-              <button type="button" class="action-btn action-edit" title="Edit">
-                <i class="fas fa-pencil-alt"></i>
-              </button>
-
-              <button
-                type="button"
-                class="action-btn action-delete"
-                title="Delete"
+              <span
+                class="featured-pill featured-yes"
+                :class="vacancy.featured ? 'featured-yes' : 'featured-no'"
               >
-                <i class="fas fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-
-          <!-- Vacancy 3 -->
-          <tr>
-            <td class="id-cell">3</td>
-
-            <td>
-              <div class="company-cell">
-                <div class="company-icon">
-                  <i class="fa-solid fa-building"></i>
-                </div>
-
-                <span> Acme Corp </span>
-              </div>
-            </td>
-
-            <td class="cat-cell">
-              <span class="category-badge"> Healthcare </span>
-            </td>
-
-            <td class="name-cell">Hospital Administrator</td>
-
-            <td class="date-cell">2026-09-05</td>
-
-            <td class="date-cell">2026-10-05</td>
-
-            <td>
-              <span class="status-pill status-open">
-                <span class="status-dot"></span>
-                OPEN
+                <i v-if="vacancy.featured" class="fa-solid fa-star"></i>
+                {{ vacancy.featured ? "FEATURED" : "STANDARD" }}
               </span>
-            </td>
-
-            <td>
-              <span class="featured-pill featured-no"> Standard </span>
             </td>
 
             <td class="actions-cell">
