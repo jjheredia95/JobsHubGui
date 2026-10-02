@@ -20,7 +20,9 @@ async function loadVacancies(page = 0, size = pageSize.value) {
   error.value = "";
 
   try {
-    const response = await fetch(`http://localhost:8080/api/vacancies/admin?page=${page}&size=${size}`);
+    const response = await fetch(
+      `http://localhost:8080/api/vacancies/admin?page=${page}&size=${size}`,
+    );
 
     if (!response.ok) {
       throw Error("Could not load Vacancies");
@@ -31,15 +33,11 @@ async function loadVacancies(page = 0, size = pageSize.value) {
     totalElements.value = data.totalElements;
     totalPages.value = data.totalPages;
     currentPage.value = data.number;
-
   } catch (err) {
     error.value = err.message;
   } finally {
     loading.value = false;
   }
-
-
-
 }
 
 onMounted(() => {
@@ -89,24 +87,18 @@ function formatDate(dateString) {
       <div class="card-body">
         <div class="row g-3 align-items-end">
           <!-- Search by name -->
-          <div class="col-12 col-md-4">
+          <div class="col-12 col-md-3">
             <label class="form-label small text-muted"> Search </label>
 
-            <div class="input-group search-group">
-              <input
-                  type="text"
-                  class="form-control"
-                  placeholder="Search by vacancy name..."
-              />
-
-              <button class="btn btn-primary search-btn" type="button">
-                <i class="fa-solid fa-magnifying-glass"></i>
-              </button>
-            </div>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search by vacancy name..."
+            />
           </div>
 
           <!-- Company dropdown -->
-          <div class="col-12 col-md-4">
+          <div class="col-12 col-md-3">
             <label class="form-label small text-muted"> Company </label>
 
             <select class="form-select">
@@ -117,70 +109,95 @@ function formatDate(dateString) {
             </select>
           </div>
 
-          <!-- Category pills -->
-          <div class="col-12 col-md-4">
+          <!-- Category -->
+          <div class="col-12 col-md-3">
             <label class="form-label small text-muted d-block">
               Category
             </label>
 
             <div class="d-flex flex-wrap gap-2">
               <button
-                  type="button"
-                  class="btn btn-sm btn-primary rounded-pill category-btn active"
+                type="button"
+                class="btn btn-sm btn-primary rounded-pill category-btn active"
               >
                 All
               </button>
 
               <button
-                  type="button"
-                  class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
+                type="button"
+                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
               >
                 Technology
               </button>
 
               <button
-                  type="button"
-                  class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
+                type="button"
+                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
               >
                 Healthcare
               </button>
 
               <button
-                  type="button"
-                  class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
+                type="button"
+                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
               >
                 Finance
               </button>
 
               <button
-                  type="button"
-                  class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
+                type="button"
+                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
               >
                 Education
               </button>
 
               <button
-                  type="button"
-                  class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
+                type="button"
+                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
               >
                 Marketing
               </button>
             </div>
           </div>
+
+          <!-- Status dropdown -->
+          <div class="col-12 col-md-3">
+            <label class="form-label small text-muted"> Status </label>
+
+            <select class="form-select">
+              <option selected>All statuses</option>
+              <option>Open</option>
+              <option>Published</option>
+              <option>Closed</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ── SEARCH BUTTON ── -->
+        <div class="d-flex justify-content-end mt-4">
+          <button type="button" class="btn btn-primary search-btn">
+            <i class="fa-solid fa-magnifying-glass me-2"></i>
+            Search
+          </button>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- ── LOADING ── -->
   <div v-if="loading" style="text-align: center">Loading...</div>
+
+  <!-- ── ERROR ── -->
   <div
-      v-else-if="error"
-      style="text-align: center"
-      class="alert alert-danger"
-      role="alert"
+    v-else-if="error"
+    style="text-align: center"
+    class="alert alert-danger"
+    role="alert"
   >
     {{ error }}
   </div>
+
+  <!-- ── RESULTS ── -->
   <div v-else>
     <!-- ── MAIN ── -->
     <main class="container pb-4" style="max-width: 1100px">
@@ -199,94 +216,101 @@ function formatDate(dateString) {
       <div class="admin-table-wrap">
         <table class="admin-table">
           <thead>
-          <tr>
-            <th>Id</th>
-            <th>Company</th>
-            <th>Category</th>
-            <th>Name</th>
-            <th>Published Date</th>
-            <th>Close Date</th>
-            <th>Status</th>
-            <th>Featured</th>
-            <th style="text-align: right">Actions</th>
-          </tr>
+            <tr>
+              <th>Id</th>
+              <th>Company</th>
+              <th>Category</th>
+              <th>Name</th>
+              <th>Published Date</th>
+              <th>Close Date</th>
+              <th>Status</th>
+              <th>Featured</th>
+              <th style="text-align: right">Actions</th>
+            </tr>
           </thead>
 
           <tbody>
-          <!-- Vacancy 1 -->
-          <tr v-for="vacancy in vacancies" :key="vacancy.id">
-            <td class="id-cell">{{ vacancy.id }}</td>
+            <tr v-for="vacancy in vacancies" :key="vacancy.id">
+              <td class="id-cell">
+                {{ vacancy.id }}
+              </td>
 
-            <td>
-              <div class="company-cell">
-                <div class="company-icon">
-                  <i class="fa-solid fa-building"></i>
+              <td>
+                <div class="company-cell">
+                  <div class="company-icon">
+                    <i class="fa-solid fa-building"></i>
+                  </div>
+
+                  <span>
+                    {{ vacancy.companyName }}
+                  </span>
                 </div>
+              </td>
 
-                <span>{{ vacancy.companyName }}</span>
-              </div>
-            </td>
+              <td class="cat-cell">
+                <span class="category-badge">
+                  {{ vacancy.categoryName }}
+                </span>
+              </td>
 
-            <td class="cat-cell">
-              <span class="category-badge">
-                {{ vacancy.categoryName }}
-              </span>
-            </td>
+              <td class="name-cell">
+                {{ vacancy.name }}
+              </td>
 
-            <td class="name-cell">{{ vacancy.name }}</td>
+              <td class="date-cell">
+                {{ formatDate(vacancy.publishedDate) }}
+              </td>
 
-            <td class="date-cell">
-              {{ formatDate(vacancy.publishedDate) }}
-            </td>
+              <td class="date-cell">
+                {{ formatDate(vacancy.closingDate) }}
+              </td>
 
-            <td class="date-cell">
-              {{ formatDate(vacancy.closingDate) }}
-            </td>
-
-            <td>
-              <span
+              <td>
+                <span
                   class="status-pill"
                   :class="
-                  vacancy.status === 'OPEN'
-                    ? 'status-open'
-                    : vacancy.status === 'PUBLISHED'
-                      ? 'status-published'
-                      : 'status-closed'
-                "
-              >
-                <span class="status-dot"></span>
-                {{ vacancy.status }}
-              </span>
-            </td>
+                    vacancy.status === 'OPEN'
+                      ? 'status-open'
+                      : vacancy.status === 'PUBLISHED'
+                        ? 'status-published'
+                        : 'status-closed'
+                  "
+                >
+                  <span class="status-dot"></span>
 
-            <td>
-              <span
+                  {{ vacancy.status }}
+                </span>
+              </td>
+
+              <td>
+                <span
                   class="featured-pill"
                   :class="vacancy.featured ? 'featured-yes' : 'featured-no'"
-              >
-                <i v-if="vacancy.featured" class="fa-solid fa-star"></i>
-                {{ vacancy.featured ? "FEATURED" : "STANDARD" }}
-              </span>
-            </td>
+                >
+                  <i v-if="vacancy.featured" class="fa-solid fa-star"></i>
 
-            <td class="actions-cell">
-              <button
+                  {{ vacancy.featured ? "FEATURED" : "STANDARD" }}
+                </span>
+              </td>
+
+              <td class="actions-cell">
+                <button
                   type="button"
                   class="action-btn action-edit"
                   title="Edit"
-              >
-                <i class="fas fa-pencil-alt"></i>
-              </button>
+                >
+                  <i class="fas fa-pencil-alt"></i>
+                </button>
 
-              <button
+                <button
                   type="button"
                   class="action-btn action-delete"
                   title="Delete"
-              >
-                <i class="fas fa-trash"></i>
-              </button>
-            </td>
-          </tr>
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -294,10 +318,9 @@ function formatDate(dateString) {
 
     <!-- ── PAGINATION ── -->
     <Pagination
-        :current-page="currentPage + 1"
-        :total-pages="totalPages"
-        @page-change="loadVacancies($event - 1)"
+      :current-page="currentPage + 1"
+      :total-pages="totalPages"
+      @page-change="loadVacancies($event - 1)"
     />
-  </div><br>
+  </div>
 </template>
-
