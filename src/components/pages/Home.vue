@@ -1,23 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import "../../assets/css/Home.css";
-import { computed } from "vue";
-//import Pagination from "../common/Pagination.vue";
-
-const visiblePages = computed(() => {
-  const windowSize = 3;
-  const blockStart =
-    Math.floor(currentPage.value / windowSize) * windowSize + 1;
-  const pages = [];
-  for (
-    let i = blockStart;
-    i < blockStart + windowSize && i <= totalPages.value;
-    i++
-  ) {
-    pages.push(i);
-  }
-  return pages;
-});
+import Pagination from "../common/Pagination.vue";
 
 const vacancies = ref([]);
 const loading = ref(false);
@@ -97,20 +81,6 @@ function daysAgo(dateString) {
   const diffMs = today - published;
   const days = Math.floor(diffMs / 86400000);
   return `${days} days ago`;
-}
-
-function goToPreviousPage() {
-  if (currentPage.value === 0) {
-    return;
-  }
-  loadVacancies(currentPage.value - 1);
-}
-
-function goToNextPage() {
-  if (currentPage.value >= totalPages.value - 1) {
-    return;
-  }
-  loadVacancies(currentPage.value + 1);
 }
 
 // Clear filters button
@@ -283,34 +253,10 @@ onMounted(() => {
     </div>
 
     <!-- PAGINATION -->
-    <nav class="pagination-nav" aria-label="Pagination">
-      <ul class="pagination-list">
-        <li
-          class="pagination-item"
-          :class="{ disabled: currentPage === 0 }"
-          @click="goToPreviousPage"
-        >
-          <span class="pagination-link">« Previous</span>
-        </li>
-
-        <li
-          class="pagination-item"
-          :class="{ active: n - 1 === currentPage }"
-          v-for="n in visiblePages"
-          :key="n"
-          @click="loadVacancies(n - 1)"
-        >
-          <span class="pagination-link">{{ n }}</span>
-        </li>
-
-        <li
-          class="pagination-item"
-          :class="{ disabled: currentPage === totalPages - 1 }"
-          @click="goToNextPage"
-        >
-          <span class="pagination-link">Next »</span>
-        </li>
-      </ul>
-    </nav>
+    <Pagination
+        :current-page="currentPage + 1"
+        :total-pages="totalPages"
+        @page-change="loadVacancies($event - 1)"
+    />
   </main>
 </template>

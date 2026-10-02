@@ -1,18 +1,64 @@
 <script setup>
 import "../../../assets/css/VacancyAdminList.css";
 import { ref, onMounted } from "vue";
+import Pagination from "../../common/Pagination.vue";
 
+// API DATA
 const vacancies = ref([]);
 
-async function loadVacancies() {
-  const response = await fetch("http://localhost:8080/api/vacancies/admin");
-  const data = await response.json();
-  vacancies.value = data.content;
+// LOADING STATES
+const loading = ref(true);
+const error = ref("");
+
+// PAGINATION STATE VARIABLES
+const currentPage = ref(0);
+const totalPages = ref(0);
+const totalElements = ref(0);
+const pageSize = ref(10);
+
+async function loadVacancies(page = 0, size = pageSize.value) {
+  error.value = "";
+
+  try {
+    const response = await fetch(`http://localhost:8080/api/vacancies/admin?page=${page}&size=${size}`);
+
+    if (!response.ok) {
+      throw Error("Could not load Vacancies");
+    }
+
+    const data = await response.json();
+    vacancies.value = data.content;
+    totalElements.value = data.totalElements;
+    totalPages.value = data.totalPages;
+    currentPage.value = data.number;
+
+  } catch (err) {
+    error.value = err.message;
+  } finally {
+    loading.value = false;
+  }
+
+
+
 }
 
 onMounted(() => {
   loadVacancies();
 });
+
+function formatDate(dateString) {
+  if (!dateString) {
+    return "TBA";
+  }
+
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "2-digit",
+    timeZone: "UTC",
+  }).format(date);
+}
 </script>
 
 <template>
@@ -37,9 +83,8 @@ onMounted(() => {
     </div>
   </div>
 
-  <!-- ── MAIN ── -->
-  <main class="container py-4" style="max-width: 1100px">
-    <!-- ── FILTERS ── -->
+  <!-- ── FILTERS ── -->
+  <section class="container py-4" style="max-width: 1100px">
     <div class="card filter-card mb-4">
       <div class="card-body">
         <div class="row g-3 align-items-end">
@@ -49,9 +94,9 @@ onMounted(() => {
 
             <div class="input-group search-group">
               <input
-                type="text"
-                class="form-control"
-                placeholder="Search by vacancy name..."
+                  type="text"
+                  class="form-control"
+                  placeholder="Search by vacancy name..."
               />
 
               <button class="btn btn-primary search-btn" type="button">
@@ -80,43 +125,43 @@ onMounted(() => {
 
             <div class="d-flex flex-wrap gap-2">
               <button
-                type="button"
-                class="btn btn-sm btn-primary rounded-pill category-btn active"
+                  type="button"
+                  class="btn btn-sm btn-primary rounded-pill category-btn active"
               >
                 All
               </button>
 
               <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
               >
                 Technology
               </button>
 
               <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
               >
                 Healthcare
               </button>
 
               <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
               >
                 Finance
               </button>
 
               <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
               >
                 Education
               </button>
 
               <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
               >
                 Marketing
               </button>
@@ -125,22 +170,35 @@ onMounted(() => {
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- ── SECTION TITLE ── -->
-    <div class="d-flex align-items-center mb-3">
-      <h2 class="section-title mb-0">
-        <span class="section-bar"></span>
+  <div v-if="loading" style="text-align: center">Loading...</div>
+  <div
+      v-else-if="error"
+      style="text-align: center"
+      class="alert alert-danger"
+      role="alert"
+  >
+    {{ error }}
+  </div>
+  <div v-else>
+    <!-- ── MAIN ── -->
+    <main class="container pb-4" style="max-width: 1100px">
+      <!-- ── SECTION TITLE ── -->
+      <div class="d-flex align-items-center mb-3">
+        <h2 class="section-title mb-0">
+          <span class="section-bar"></span>
 
-        All Vacancies
+          All Vacancies
 
-        <span class="badge-count"> 15 results </span>
-      </h2>
-    </div>
+          <span class="badge-count"> {{ totalElements }} results </span>
+        </h2>
+      </div>
 
-    <!-- ── TABLE CARD ── -->
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
+      <!-- ── TABLE CARD ── -->
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
           <tr>
             <th>Id</th>
             <th>Company</th>
@@ -152,9 +210,9 @@ onMounted(() => {
             <th>Featured</th>
             <th style="text-align: right">Actions</th>
           </tr>
-        </thead>
+          </thead>
 
-        <tbody>
+          <tbody>
           <!-- Vacancy 1 -->
           <tr v-for="vacancy in vacancies" :key="vacancy.id">
             <td class="id-cell">{{ vacancy.id }}</td>
@@ -165,24 +223,30 @@ onMounted(() => {
                   <i class="fa-solid fa-building"></i>
                 </div>
 
-                <span> {{ vacancy.companyName }} </span>
+                <span>{{ vacancy.companyName }}</span>
               </div>
             </td>
 
             <td class="cat-cell">
-              <span class="category-badge"> {{ vacancy.categoryName }} </span>
+              <span class="category-badge">
+                {{ vacancy.categoryName }}
+              </span>
             </td>
 
             <td class="name-cell">{{ vacancy.name }}</td>
 
-            <td class="date-cell">{{ vacancy.publishedDate }}</td>
+            <td class="date-cell">
+              {{ formatDate(vacancy.publishedDate) }}
+            </td>
 
-            <td class="date-cell">{{ vacancy.closingDate }}</td>
+            <td class="date-cell">
+              {{ formatDate(vacancy.closingDate) }}
+            </td>
 
             <td>
               <span
-                class="status-pill status-open"
-                :class="
+                  class="status-pill"
+                  :class="
                   vacancy.status === 'OPEN'
                     ? 'status-open'
                     : vacancy.status === 'PUBLISHED'
@@ -197,8 +261,8 @@ onMounted(() => {
 
             <td>
               <span
-                class="featured-pill featured-yes"
-                :class="vacancy.featured ? 'featured-yes' : 'featured-no'"
+                  class="featured-pill"
+                  :class="vacancy.featured ? 'featured-yes' : 'featured-no'"
               >
                 <i v-if="vacancy.featured" class="fa-solid fa-star"></i>
                 {{ vacancy.featured ? "FEATURED" : "STANDARD" }}
@@ -206,42 +270,34 @@ onMounted(() => {
             </td>
 
             <td class="actions-cell">
-              <button type="button" class="action-btn action-edit" title="Edit">
+              <button
+                  type="button"
+                  class="action-btn action-edit"
+                  title="Edit"
+              >
                 <i class="fas fa-pencil-alt"></i>
               </button>
 
               <button
-                type="button"
-                class="action-btn action-delete"
-                title="Delete"
+                  type="button"
+                  class="action-btn action-delete"
+                  title="Delete"
               >
                 <i class="fas fa-trash"></i>
               </button>
             </td>
           </tr>
-        </tbody>
-      </table>
-    </div>
+          </tbody>
+        </table>
+      </div>
+    </main>
 
     <!-- ── PAGINATION ── -->
-    <nav class="pagination-nav" aria-label="Pagination">
-      <ul class="pagination-list">
-        <li class="pagination-item disabled">
-          <span class="pagination-link"> « Previous </span>
-        </li>
-
-        <li class="pagination-item active">
-          <span class="pagination-link"> 1 </span>
-        </li>
-
-        <li class="pagination-item">
-          <span class="pagination-link"> 2 </span>
-        </li>
-
-        <li class="pagination-item">
-          <span class="pagination-link"> Next » </span>
-        </li>
-      </ul>
-    </nav>
-  </main>
+    <Pagination
+        :current-page="currentPage + 1"
+        :total-pages="totalPages"
+        @page-change="loadVacancies($event - 1)"
+    />
+  </div><br>
 </template>
+
