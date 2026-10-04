@@ -16,6 +16,25 @@ const totalPages = ref(0);
 const totalElements = ref(0);
 const pageSize = ref(10);
 
+// COMPANY
+const companies = ref([]);
+const companiesError = ref("");
+const selectedCompanyId = ref(null);
+
+async function loadCompanies() {
+  companiesError.value = "";
+
+  try {
+    const response = await fetch("http://localhost:8080/api/companies/filters");
+    if (!response.ok) {
+      throw new Error("Companies filters could not be loaded.");
+    }
+    companies.value = await response.json();
+  } catch (e) {
+    companiesError.value = e.message;
+  }
+}
+
 async function loadVacancies(page = 0, size = pageSize.value) {
   error.value = "";
 
@@ -41,6 +60,7 @@ async function loadVacancies(page = 0, size = pageSize.value) {
 }
 
 onMounted(() => {
+  loadCompanies();
   loadVacancies();
 });
 
@@ -101,11 +121,15 @@ function formatDate(dateString) {
           <div class="col-12 col-md-3">
             <label class="form-label small text-muted"> Company </label>
 
-            <select class="form-select">
-              <option selected>All companies</option>
-              <option>NYC Department of Education</option>
-              <option>Acme Corp</option>
-              <option>Globex Inc.</option>
+            <select v-model="selectedCompanyId" class="form-select">
+              <option :value="null">All companies</option>
+              <option
+                v-for="company in companies"
+                :key="company.id"
+                :value="company.id"
+              >
+                {{ company.name }}
+              </option>
             </select>
           </div>
 
@@ -230,10 +254,9 @@ function formatDate(dateString) {
           </thead>
 
           <tbody>
+            <!-- Vacancy 1 -->
             <tr v-for="vacancy in vacancies" :key="vacancy.id">
-              <td class="id-cell">
-                {{ vacancy.id }}
-              </td>
+              <td class="id-cell">{{ vacancy.id }}</td>
 
               <td>
                 <div class="company-cell">
@@ -241,9 +264,7 @@ function formatDate(dateString) {
                     <i class="fa-solid fa-building"></i>
                   </div>
 
-                  <span>
-                    {{ vacancy.companyName }}
-                  </span>
+                  <span>{{ vacancy.companyName }}</span>
                 </div>
               </td>
 
@@ -253,9 +274,7 @@ function formatDate(dateString) {
                 </span>
               </td>
 
-              <td class="name-cell">
-                {{ vacancy.name }}
-              </td>
+              <td class="name-cell">{{ vacancy.name }}</td>
 
               <td class="date-cell">
                 {{ formatDate(vacancy.publishedDate) }}
@@ -277,7 +296,6 @@ function formatDate(dateString) {
                   "
                 >
                   <span class="status-dot"></span>
-
                   {{ vacancy.status }}
                 </span>
               </td>
@@ -288,7 +306,6 @@ function formatDate(dateString) {
                   :class="vacancy.featured ? 'featured-yes' : 'featured-no'"
                 >
                   <i v-if="vacancy.featured" class="fa-solid fa-star"></i>
-
                   {{ vacancy.featured ? "FEATURED" : "STANDARD" }}
                 </span>
               </td>
@@ -323,4 +340,5 @@ function formatDate(dateString) {
       @page-change="loadVacancies($event - 1)"
     />
   </div>
+  <br />
 </template>
