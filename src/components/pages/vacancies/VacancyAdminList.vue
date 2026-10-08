@@ -21,6 +21,33 @@ const companies = ref([]);
 const companiesError = ref("");
 const selectedCompanyId = ref(null);
 
+// CATEGORY
+const categories = ref([]);
+const categoriesError = ref("");
+const selectedCategoryId = ref(null);
+
+// STATUS
+const selectedStatus = ref(null);
+
+// SEARCH
+const searchTerm = ref("");
+
+async function loadCategories() {
+  categoriesError.value = "";
+
+  try {
+    const response = await fetch("http://localhost:8080/api/categories");
+
+    if (!response.ok) {
+      throw new Error("Categories filter could not be loaded.");
+    }
+
+    categories.value = await response.json();
+  } catch (err) {
+    categoriesError.value = err.message;
+  }
+}
+
 async function loadCompanies() {
   companiesError.value = "";
 
@@ -36,12 +63,29 @@ async function loadCompanies() {
 }
 
 async function loadVacancies(page = 0, size = pageSize.value) {
+  loading.value = true;
   error.value = "";
 
   try {
-    const response = await fetch(
-      `http://localhost:8080/api/vacancies/admin?page=${page}&size=${size}`,
-    );
+    let url = `http://localhost:8080/api/vacancies/admin?page=${page}&size=${size}`;
+
+    if (searchTerm.value) {
+      url += `&name=${encodeURIComponent(searchTerm.value)}`;
+    }
+
+    if (selectedCategoryId.value !== null) {
+      url += `&categoryId=${selectedCategoryId.value}`;
+    }
+
+    if (selectedCompanyId.value !== null) {
+      url += `&companyId=${selectedCompanyId.value}`;
+    }
+
+    if (selectedStatus.value !== null) {
+      url += `&status=${selectedStatus.value}`;
+    }
+
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw Error("Could not load Vacancies");
@@ -59,7 +103,18 @@ async function loadVacancies(page = 0, size = pageSize.value) {
   }
 }
 
+function resetFilters() {
+  searchTerm.value = "";
+  selectedCompanyId.value = null;
+  selectedCategoryId.value = null;
+  selectedStatus.value = null;
+  currentPage.value = 0;
+
+  loadVacancies();
+}
+
 onMounted(() => {
+  loadCategories();
   loadCompanies();
   loadVacancies();
 });
@@ -114,6 +169,7 @@ function formatDate(dateString) {
               type="text"
               class="form-control"
               placeholder="Search by vacancy name..."
+              v-model="searchTerm"
             />
           </div>
 
@@ -142,44 +198,30 @@ function formatDate(dateString) {
             <div class="d-flex flex-wrap gap-2">
               <button
                 type="button"
-                class="btn btn-sm btn-primary rounded-pill category-btn active"
+                class="btn btn-sm rounded-pill category-btn"
+                :class="
+                  selectedCategoryId === null
+                    ? 'btn-primary'
+                    : 'btn-outline-secondary'
+                "
+                @click="selectedCategoryId = null"
               >
                 All
               </button>
 
               <button
+                v-for="category in categories"
+                :key="category.id"
                 type="button"
-                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
+                class="btn btn-sm rounded-pill category-btn"
+                :class="
+                  selectedCategoryId === category.id
+                    ? 'btn-primary'
+                    : 'btn-outline-secondary'
+                "
+                @click="selectedCategoryId = category.id"
               >
-                Technology
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
-              >
-                Healthcare
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
-              >
-                Finance
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
-              >
-                Education
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary rounded-pill category-btn"
-              >
-                Marketing
+                {{ category.name }}
               </button>
             </div>
           </div>
@@ -188,22 +230,36 @@ function formatDate(dateString) {
           <div class="col-12 col-md-3">
             <label class="form-label small text-muted"> Status </label>
 
-            <select class="form-select">
-              <option selected>All statuses</option>
-              <option>Open</option>
-              <option>Published</option>
-              <option>Closed</option>
+            <select v-model="selectedStatus" class="form-select">
+              <option :value="null">All statuses</option>
+              <option value="OPEN">Open</option>
+              <option value="PUBLISHED">Published</option>
+              <option value="CLOSED">Closed</option>
             </select>
           </div>
         </div>
 
         <!-- ── SEARCH BUTTON ── -->
-        <div class="d-flex justify-content-end mt-4">
-          <button type="button" class="btn btn-primary search-btn">
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <button type="button" class="btn btn-success" @click="resetFilters">
+            <i class="fa-solid fa-rotate-left me-2"></i>
+            Clear Filters
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary search-btn"
+            @click="loadVacancies()"
+          >
             <i class="fa-solid fa-magnifying-glass me-2"></i>
             Search
           </button>
         </div>
+        <!--<p>
+          búsqueda: "{{ searchTerm }}" | compañía:
+          {{ JSON.stringify(selectedCompanyId) }} | categoría:
+          {{ JSON.stringify(selectedCategoryId) }} | status:
+          {{ JSON.stringify(selectedStatus) }}
+        </p>-->
       </div>
     </div>
   </section>
