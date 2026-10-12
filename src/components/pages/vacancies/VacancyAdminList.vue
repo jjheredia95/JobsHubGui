@@ -157,6 +157,7 @@ function formatDate(dateString) {
   </div>
 
   <!-- ── FILTERS ── -->
+   <!-- TODO: Filtros sin aplicar que se cuelan en la paginación. loadVacancies() lee los refs en el momento de la llamada. Si cambias, por ejemplo, la categoría sin pulsar Search y luego haces clic en la página 2, esa página se pide con la categoría nueva y no con la que ves en la tabla. Prueba ese escenario para comprobarlo. Si te parece un caso demasiado raro para una herramienta interna, puedes anotarlo como mejora. -->
   <section class="container py-4" style="max-width: 1100px">
     <div class="card filter-card mb-4">
       <div class="card-body">
@@ -274,8 +275,21 @@ function formatDate(dateString) {
     class="alert alert-danger"
     role="alert"
   >
-    {{ error }}
+    {{ error }} 
   </div>
+
+  <!-- ── NO RESULTS ── -->
+  <div
+    v-else-if="vacancies.length === 0";
+    style="text-align: center"
+    class="alert alert-info"
+    role="alert"
+  >
+    {{ "No vacancies found with the current filters." }}
+  </div>
+
+
+
 
   <!-- ── RESULTS ── -->
   <div v-else>

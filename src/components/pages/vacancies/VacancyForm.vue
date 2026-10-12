@@ -250,7 +250,7 @@ import "../../../assets/css/VacancyForm.css";
                       required
                     >
                       <option value="" selected disabled>
-                        Select work mode
+                        Select work mode                  
                       </option>
                       <option value="ON_SITE">On-site</option>
                       <option value="HYBRID">Hybrid</option>
